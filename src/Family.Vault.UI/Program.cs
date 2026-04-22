@@ -133,6 +133,14 @@ builder.Services.AddHttpClient<IEmergencyFundApiClient, EmergencyFundApiClient>(
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Typed HttpClient for the Nominees API — shares the same base address.
+builder.Services.AddHttpClient<INomineeApiClient, NomineeApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

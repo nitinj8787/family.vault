@@ -1,0 +1,358 @@
+@page "/nominees"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject INomineeApiClient NomineeApiClient
+@inject ILogger<NomineeManager> Logger
+
+<PageTitle>Nominee Manager – Family Vault</PageTitle>
+
+<h1>Nominee Manager</h1>
+<p class="vault-page-subtitle">Track who receives each of your assets and ensure no asset is left without a nominee.</p>
+
+@if (_isLoading)
+{
+    <p class="vault-loading" role="status">Loading nominees…</p>
+}
+else
+{
+    @* ── Missing nominees warning ── *@
+    @if (_missingTypes.Count > 0)
+    {
+        <div class="vault-nominee-warning" role="alert">
+            <span class="vault-nominee-warning__icon" aria-hidden="true">⚠️</span>
+            <div>
+                <strong>Missing nominees detected</strong>
+                <p class="vault-nominee-warning__detail">
+                    The following asset types have no nominee assigned:
+                    <strong>@string.Join(", ", _missingTypes)</strong>.
+                    Consider adding nominees to ensure all assets are covered.
+                </p>
+            </div>
+        </div>
+    }
+    else if (_entries.Count > 0)
+    {
+        <div class="vault-nominee-allclear" role="status">
+            <span aria-hidden="true">✅</span> All tracked asset types have at least one nominee assigned.
+        </div>
+    }
+
+    @* ── Toolbar ── *@
+    <div class="vault-assets-toolbar">
+        <button class="vault-btn vault-btn--primary" @onclick="OpenAddDialog">
+            + Add Nominee
+        </button>
+    </div>
+
+    @* ── Status message ── *@
+    @if (_statusMessage is not null)
+    {
+        <StatusMessage Type="@_statusType" Message="@_statusMessage" />
+    }
+
+    @if (_entries.Count == 0)
+    {
+        <p class="vault-empty">No nominees recorded yet. Click <strong>+ Add Nominee</strong> to get started.</p>
+    }
+    else
+    {
+        <div class="vault-table-wrapper">
+            <table class="vault-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Asset Type</th>
+                        <th scope="col">Institution</th>
+                        <th scope="col">Nominee Name</th>
+                        <th scope="col">Relationship</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in _entries)
+                    {
+                        <tr>
+                            <td>
+                                <span class="vault-nominee-type">@entry.AssetType</span>
+                            </td>
+                            <td><strong>@entry.Institution</strong></td>
+                            <td>@entry.NomineeName</td>
+                            <td class="vault-muted">@entry.Relationship</td>
+                            <td class="vault-actions-cell">
+                                <button class="vault-btn vault-btn--secondary vault-btn--sm"
+                                        @onclick="() => OpenEditDialog(entry)">
+                                    Edit
+                                </button>
+                                <button class="vault-btn vault-btn--danger vault-btn--sm"
+                                        @onclick="() => OpenDeleteConfirm(entry)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@* ── Add / Edit Modal ── *@
+@if (_showDialog)
+{
+    <div class="vault-modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="nominee-dialog-title">
+        <div class="vault-modal">
+            <div class="vault-modal__header">
+                <h2 id="nominee-dialog-title" class="vault-modal__title">
+                    @(_editModel.IsNew ? "Add Nominee" : "Edit Nominee")
+                </h2>
+                <button class="vault-modal__close" @onclick="CloseDialog" aria-label="Close">✕</button>
+            </div>
+
+            <EditForm Model="_editModel" OnValidSubmit="SaveEntryAsync">
+                <DataAnnotationsValidator />
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="nomineeAssetType">
+                        Asset Type <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputSelect id="nomineeAssetType" class="vault-select" @bind-Value="_editModel.AssetType">
+                        <option value="">— Select asset type —</option>
+                        @foreach (var t in AllAssetTypes)
+                        {
+                            <option value="@t">@t</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _editModel.AssetType)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="nomineeInstitution">
+                        Institution <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="nomineeInstitution" class="vault-input" @bind-Value="_editModel.Institution"
+                               placeholder="e.g. Barclays, Aviva, Vanguard" />
+                    <ValidationMessage For="@(() => _editModel.Institution)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="nomineeName">
+                        Nominee Name <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="nomineeName" class="vault-input" @bind-Value="_editModel.NomineeName"
+                               placeholder="Full legal name" />
+                    <ValidationMessage For="@(() => _editModel.NomineeName)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="nomineeRelationship">
+                        Relationship <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="nomineeRelationship" class="vault-input" @bind-Value="_editModel.Relationship"
+                               placeholder="e.g. Spouse, Child, Sibling" />
+                    <ValidationMessage For="@(() => _editModel.Relationship)" class="vault-validation" />
+                </div>
+
+                <div class="vault-modal__footer">
+                    <button type="button" class="vault-btn vault-btn--secondary"
+                            @onclick="CloseDialog">
+                        Cancel
+                    </button>
+                    <button type="submit" class="vault-btn vault-btn--primary"
+                            disabled="@_isSaving" aria-busy="@_isSaving">
+                        @(_isSaving ? "Saving…" : "Save")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ── Delete confirmation Modal ── *@
+@if (_deleteTarget is not null)
+{
+    <div class="vault-modal-overlay" role="alertdialog" aria-modal="true"
+         aria-labelledby="nominee-delete-title">
+        <div class="vault-modal vault-modal--narrow">
+            <div class="vault-modal__header">
+                <h2 id="nominee-delete-title" class="vault-modal__title">Delete Nominee</h2>
+            </div>
+            <p>
+                Are you sure you want to remove
+                <strong>@_deleteTarget.NomineeName</strong>
+                as nominee for <strong>@_deleteTarget.Institution</strong>?
+                This action cannot be undone.
+            </p>
+            <div class="vault-modal__footer">
+                <button class="vault-btn vault-btn--secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="vault-btn vault-btn--danger" @onclick="ConfirmDeleteAsync"
+                        disabled="@_isSaving" aria-busy="@_isSaving">
+                    @(_isSaving ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // All asset-type labels exposed by the API enum (must stay in sync with NomineeAssetType).
+    private static readonly string[] AllAssetTypes =
+        ["BankAccount", "Investment", "Insurance", "Property", "Pension", "Other"];
+
+    private List<NomineeDisplayModel> _entries = [];
+    private bool _isLoading = true;
+    private bool _isSaving;
+
+    private string? _statusMessage;
+    private StatusType _statusType = StatusType.Info;
+
+    private bool _showDialog;
+    private NomineeFormModel _editModel = new();
+    private NomineeDisplayModel? _deleteTarget;
+
+    // Asset types that have no nominee assigned yet.
+    private List<string> _missingTypes = [];
+
+    protected override async Task OnInitializedAsync() => await LoadEntriesAsync();
+
+    private async Task LoadEntriesAsync()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var items = await NomineeApiClient.GetAllAsync();
+            _entries = [.. items];
+            RefreshMissingTypes();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load nominee entries");
+            _statusMessage = "Could not load nominee entries. Please try again.";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // ── Missing-nominees check ──────────────────────────────────────────
+
+    private void RefreshMissingTypes()
+    {
+        var coveredTypes = _entries
+            .Select(e => e.AssetType)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        _missingTypes = AllAssetTypes
+            .Where(t => !coveredTypes.Contains(t))
+            .ToList();
+    }
+
+    // ── Dialog helpers ──────────────────────────────────────────────────
+
+    private void OpenAddDialog()
+    {
+        _editModel = new NomineeFormModel();
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void OpenEditDialog(NomineeDisplayModel entry)
+    {
+        _editModel = new NomineeFormModel
+        {
+            Id = entry.Id,
+            AssetType = entry.AssetType,
+            Institution = entry.Institution,
+            NomineeName = entry.NomineeName,
+            Relationship = entry.Relationship
+        };
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+        _editModel = new NomineeFormModel();
+    }
+
+    // ── Save ────────────────────────────────────────────────────────────
+
+    private async Task SaveEntryAsync()
+    {
+        _isSaving = true;
+        _statusMessage = null;
+
+        try
+        {
+            NomineeDisplayModel saved;
+
+            if (_editModel.IsNew)
+            {
+                saved = await NomineeApiClient.AddAsync(_editModel);
+                _entries.Add(saved);
+                _statusMessage = $"{saved.NomineeName} added as nominee for {saved.Institution}.";
+            }
+            else
+            {
+                saved = await NomineeApiClient.UpdateAsync(_editModel);
+                var idx = _entries.FindIndex(e => e.Id == saved.Id);
+                if (idx >= 0) _entries[idx] = saved;
+                _statusMessage = $"Nominee {saved.NomineeName} updated.";
+            }
+
+            RefreshMissingTypes();
+            _statusType = StatusType.Success;
+            _showDialog = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save nominee entry");
+            _statusMessage = $"Save failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Delete ──────────────────────────────────────────────────────────
+
+    private void OpenDeleteConfirm(NomineeDisplayModel entry)
+    {
+        _deleteTarget = entry;
+        _statusMessage = null;
+    }
+
+    private void CancelDelete() => _deleteTarget = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget is null) return;
+
+        _isSaving = true;
+
+        try
+        {
+            await NomineeApiClient.DeleteAsync(_deleteTarget.Id);
+            _entries.RemoveAll(e => e.Id == _deleteTarget.Id);
+            _statusMessage = $"Nominee {_deleteTarget.NomineeName} deleted.";
+            _statusType = StatusType.Success;
+            _deleteTarget = null;
+            RefreshMissingTypes();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete nominee entry {NomineeId}", _deleteTarget?.Id);
+            _statusMessage = $"Delete failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

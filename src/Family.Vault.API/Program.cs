@@ -1,7 +1,3 @@
-using Azure.Core;
-using Azure.Identity;
-using Family.Vault.API.Authorization;
-using Family.Vault.API.Configuration;
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Configuration;
 using Family.Vault.Application.Services;
@@ -9,6 +5,10 @@ using Family.Vault.Infrastructure.Secrets;
 using Family.Vault.Infrastructure.Storage;
 using Microsoft.Identity.Web;
 using System.Text.Json.Serialization;
+using Azure.Core;
+using Azure.Identity;
+using Family.Vault.API.Authorization;
+using Family.Vault.API.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,6 +84,9 @@ builder.Services.AddSingleton<IPropertyService, PropertyService>();
 // Singleton so that in-memory emergency fund entries survive across requests.
 // Replace with a scoped, DB-backed implementation for production.
 builder.Services.AddSingleton<IEmergencyFundService, EmergencyFundService>();
+// Singleton so that in-memory nominee entries survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<INomineeService, NomineeService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
