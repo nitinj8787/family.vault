@@ -130,7 +130,7 @@ else
                     </button>
                 </div>
             }
-            else if (_emergencyFundTotal < 1000)
+            else if (_emergencyFundTotal < MinimumRecommendedEmergencyFund)
             {
                 <div class="vault-dash-insight vault-dash-insight--warning">
                     <span class="vault-dash-insight__icon" aria-hidden="true">💰</span>
@@ -385,6 +385,14 @@ else
 
 @code {
     // -----------------------------------------------------------------
+    // Constants
+    // -----------------------------------------------------------------
+
+    private const decimal MinimumRecommendedEmergencyFund = 1000m;
+    private const int GoodScoreThreshold    = 80;
+    private const int WarningScoreThreshold = 50;
+
+    // -----------------------------------------------------------------
     // State
     // -----------------------------------------------------------------
 
@@ -432,20 +440,20 @@ else
         _missingWillCount > 0
         || _assetsWithoutNominee > 0
         || _emergencyFundEntries == 0
-        || _emergencyFundTotal < 1000
+        || _emergencyFundTotal < MinimumRecommendedEmergencyFund
         || _insuranceNoNominee > 0;
 
-    private string ScoreFillColor => _readinessScore >= 80 ? "good"
-        : _readinessScore >= 50 ? "warn"
+    private string ScoreFillColor => _readinessScore >= GoodScoreThreshold ? "good"
+        : _readinessScore >= WarningScoreThreshold ? "warn"
         : "low";
 
-    private string ScoreClass => _readinessScore >= 80 ? "vault-dash-score--good"
-        : _readinessScore >= 50 ? "vault-dash-score--warn"
+    private string ScoreClass => _readinessScore >= GoodScoreThreshold ? "vault-dash-score--good"
+        : _readinessScore >= WarningScoreThreshold ? "vault-dash-score--warn"
         : "vault-dash-score--low";
 
-    private string ScoreDescription => _readinessScore >= 80
+    private string ScoreDescription => _readinessScore >= GoodScoreThreshold
         ? "Great – your vault is well protected."
-        : _readinessScore >= 50
+        : _readinessScore >= WarningScoreThreshold
             ? "Moderate – a few gaps to address."
             : "Low – important items are missing.";
 
