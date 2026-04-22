@@ -1,6 +1,7 @@
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Exceptions;
 using Family.Vault.Application.Models;
+using Family.Vault.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,7 @@ public sealed class ProfileController(
 {
     /// <summary>Returns the personal profile for the currently authenticated user.</summary>
     [HttpGet]
+    [Authorize(Policy = AuthorizationPolicies.CriticalDataReader)]
     [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -34,6 +36,7 @@ public sealed class ProfileController(
 
     /// <summary>Creates or replaces the personal profile for the currently authenticated user.</summary>
     [HttpPut]
+    [Authorize(Policy = AuthorizationPolicies.LimitedEditor)]
     [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

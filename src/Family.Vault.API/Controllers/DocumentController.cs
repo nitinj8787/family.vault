@@ -20,7 +20,7 @@ public sealed class DocumentController(
     /// Returns all document metadata records for the currently authenticated user.
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
+    [Authorize(Policy = AuthorizationPolicies.CriticalDataReader)]
     [ProducesResponseType(typeof(IReadOnlyList<DocumentMetadataResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -41,7 +41,7 @@ public sealed class DocumentController(
     /// </param>
     /// <param name="cancellationToken">Propagated cancellation token.</param>
     [HttpPost("upload")]
-    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(typeof(DocumentUploadResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -89,7 +89,7 @@ public sealed class DocumentController(
     /// Downloads a document by its unique identifier for the currently authenticated user.
     /// </summary>
     [HttpGet("download/{id:guid}")]
-    [Authorize(Policy = AuthorizationPolicies.VaultReader)]
+    [Authorize(Policy = AuthorizationPolicies.CriticalDataReader)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

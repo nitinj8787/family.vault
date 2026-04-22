@@ -19,7 +19,7 @@ public sealed class VaultController(
     private readonly VaultUploadOptions _uploadOptions = uploadOptions.Value;
 
     [HttpGet]
-    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
+    [Authorize(Policy = AuthorizationPolicies.FamilyAssetReader)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -31,7 +31,7 @@ public sealed class VaultController(
     }
 
     [HttpGet("download/{fileName}")]
-    [Authorize(Policy = AuthorizationPolicies.VaultReader)]
+    [Authorize(Policy = AuthorizationPolicies.FamilyAssetReader)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -70,7 +70,7 @@ public sealed class VaultController(
     }
 
     [HttpPost("upload")]
-    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
