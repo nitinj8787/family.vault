@@ -372,15 +372,15 @@ else
 
             await Task.WhenAll(t1, t2, t3, t4, t5, t6, t7, t8, t9);
 
-            var ukAssets      = t1.Result;
-            var indiaAssets   = t2.Result;
-            var bankAccounts  = t3.Result;
-            var investments   = t4.Result;
-            var insurance     = t5.Result;
-            var properties    = t6.Result;
-            var nominees      = t7.Result;
-            var emergencyFund = t8.Result;
-            var wills         = t9.Result;
+            var ukAssets      = await t1;
+            var indiaAssets   = await t2;
+            var bankAccounts  = await t3;
+            var investments   = await t4;
+            var insurance     = await t5;
+            var properties    = await t6;
+            var nominees      = await t7;
+            var emergencyFund = await t8;
+            var wills         = await t9;
 
             // Section counts
             _ukAssets           = ukAssets.Count;
