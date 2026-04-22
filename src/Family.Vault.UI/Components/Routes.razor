@@ -1,27 +1,36 @@
+@inject IConfiguration Configuration
+
 <CascadingAuthenticationState>
     <Router AppAssembly="typeof(Program).Assembly">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-                <NotAuthorized>
-                    @if (!context.User.Identity!.IsAuthenticated)
-                    {
-                        <RedirectToLogin />
-                    }
-                    else
-                    {
+            @if (UseAzureAdAuth)
+            {
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                    <NotAuthorized>
+                        @if (!context.User.Identity!.IsAuthenticated)
+                        {
+                            <RedirectToLogin />
+                        }
+                        else
+                        {
+                            <LayoutView Layout="typeof(Layout.MainLayout)">
+                                <div class="vault-alert vault-alert--error" role="alert">
+                                    You are not authorized to view this page.
+                                </div>
+                            </LayoutView>
+                        }
+                    </NotAuthorized>
+                    <Authorizing>
                         <LayoutView Layout="typeof(Layout.MainLayout)">
-                            <div class="vault-alert vault-alert--error" role="alert">
-                                You are not authorized to view this page.
-                            </div>
+                            <p>Verifying access…</p>
                         </LayoutView>
-                    }
-                </NotAuthorized>
-                <Authorizing>
-                    <LayoutView Layout="typeof(Layout.MainLayout)">
-                        <p>Verifying access…</p>
-                    </LayoutView>
-                </Authorizing>
-            </AuthorizeRouteView>
+                    </Authorizing>
+                </AuthorizeRouteView>
+            }
+            else
+            {
+                <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            }
             <FocusOnNavigate RouteData="routeData" Selector="h1" />
         </Found>
         <NotFound>
@@ -33,3 +42,7 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+
+@code {
+    private bool UseAzureAdAuth => Configuration.GetValue<bool>("VaultApi:UseAzureAdAuth");
+}

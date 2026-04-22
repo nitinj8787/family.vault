@@ -1,5 +1,6 @@
 using Family.Vault.UI.Components;
 using Family.Vault.UI.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using System.Text.Json.Serialization;
@@ -9,29 +10,54 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole();
 
 // ---------------------------------------------------------------------------
-// Authentication – Azure AD (Entra ID) OIDC for interactive users.
-// Token acquisition is enabled so the UI can call the protected API on behalf
-// of the signed-in user using the On-Behalf-Of / authorisation-code flow.
+// Determine if Azure AD authentication should be enabled
 // ---------------------------------------------------------------------------
-var apiScopes = builder.Configuration.GetSection("VaultApi:Scopes").Get<string[]>() ?? [];
+var useAzureAdAuth = builder.Configuration.GetValue<bool>("VaultApi:UseAzureAdAuth");
 
-builder.Services
-    .AddMicrosoftIdentityWebAppAuthentication(builder.Configuration, "AzureAd")
-    .EnableTokenAcquisitionToCallDownstreamApi(apiScopes)
-    .AddInMemoryTokenCaches();
+// ---------------------------------------------------------------------------
+// Authentication – Azure AD (Entra ID) OIDC for interactive users.
+// Only enabled when UseAzureAdAuth is true.
+// ---------------------------------------------------------------------------
+if (useAzureAdAuth)
+{
+    var apiScopes = builder.Configuration.GetSection("VaultApi:Scopes").Get<string[]>() ?? [];
 
-// Exposes /MicrosoftIdentity/Account/SignIn and SignOut controller endpoints.
-builder.Services.AddControllersWithViews()
-    .AddMicrosoftIdentityUI()
-    .AddJsonOptions(options =>
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    builder.Services
+        .AddMicrosoftIdentityWebAppAuthentication(builder.Configuration, "AzureAd")
+        .EnableTokenAcquisitionToCallDownstreamApi(apiScopes)
+        .AddInMemoryTokenCaches();
 
-// All Blazor routes require an authenticated user by default.
-builder.Services.AddAuthorization(options =>
-    options.FallbackPolicy = options.DefaultPolicy);
+    // Exposes /MicrosoftIdentity/Account/SignIn and SignOut controller endpoints.
+    builder.Services.AddControllersWithViews()
+        .AddMicrosoftIdentityUI()
+        .AddJsonOptions(options =>
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-// Required for AuthorizeRouteView / CascadingAuthenticationState in .NET 8.
-builder.Services.AddCascadingAuthenticationState();
+    // All Blazor routes require an authenticated user by default.
+    builder.Services.AddAuthorization(options =>
+        options.FallbackPolicy = options.DefaultPolicy);
+
+    // Required for AuthorizeRouteView / CascadingAuthenticationState in .NET 8.
+    builder.Services.AddCascadingAuthenticationState();
+}
+else
+{
+    // Development: register a bypass handler so [Authorize] pages work without a real IdP.
+    builder.Services
+        .AddAuthentication(DevBypassAuthHandler.SchemeName)
+        .AddScheme<AuthenticationSchemeOptions, DevBypassAuthHandler>(
+            DevBypassAuthHandler.SchemeName, _ => { });
+
+    builder.Services.AddControllersWithViews()
+        .AddJsonOptions(options =>
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+    // No fallback policy – every request is already authenticated by DevBypassAuthHandler.
+    builder.Services.AddAuthorization();
+
+    // Still needed for Blazor authentication state.
+    builder.Services.AddCascadingAuthenticationState();
+}
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -50,8 +76,6 @@ builder.Services.AddHttpContextAccessor();
 //     Acquires an MSAL-cached bearer token for the signed-in user via
 //     ITokenAcquisition.  Requires a fully configured AzureAd section.
 // ---------------------------------------------------------------------------
-var useAzureAdAuth = builder.Configuration.GetValue<bool>("VaultApi:UseAzureAdAuth");
-
 if (useAzureAdAuth)
 {
     builder.Services.AddScoped<ITokenProvider, AzureAdTokenProvider>();
@@ -109,8 +133,11 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Expose Microsoft Identity sign-in / sign-out endpoints.
-app.MapControllers();
+// Expose Microsoft Identity sign-in / sign-out endpoints (only needed with Azure AD).
+if (useAzureAdAuth)
+{
+    app.MapControllers();
+}
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
