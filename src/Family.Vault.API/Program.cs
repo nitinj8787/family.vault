@@ -3,6 +3,7 @@ using Azure.Identity;
 using Family.Vault.API.Authorization;
 using Family.Vault.API.Configuration;
 using Family.Vault.Application.Abstractions;
+using Family.Vault.Application.Configuration;
 using Family.Vault.Application.Services;
 using Family.Vault.Infrastructure.Secrets;
 using Family.Vault.Infrastructure.Storage;
@@ -48,12 +49,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<VaultUploadOptions>(builder.Configuration.GetSection(VaultUploadOptions.SectionName));
+builder.Services.Configure<DocumentOptions>(builder.Configuration.GetSection(DocumentOptions.SectionName));
 
 // Register DefaultAzureCredential as a singleton so that token caching is shared across all
 // consumers and re-authentication round-trips are minimised.
 builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential());
 
 builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
