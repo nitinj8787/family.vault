@@ -1,6 +1,18 @@
 @Family.Vault.API_HostAddress = http://localhost:5102
 
-GET {{Family.Vault.API_HostAddress}}/weatherforecast/
+GET {{Family.Vault.API_HostAddress}}/api/vault
 Accept: application/json
+
+###
+
+POST {{Family.Vault.API_HostAddress}}/api/vault/upload
+Content-Type: multipart/form-data; boundary=FamilyVaultBoundary
+
+--FamilyVaultBoundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+sample-content
+--FamilyVaultBoundary--
 
 ###

@@ -1,15 +1,16 @@
+using Family.Vault.API.Configuration;
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Services;
 using Family.Vault.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.Configure<VaultUploadOptions>(builder.Configuration.GetSection(VaultUploadOptions.SectionName));
 
 builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
 builder.Services.AddSingleton<IBlobStorageService>(serviceProvider =>
