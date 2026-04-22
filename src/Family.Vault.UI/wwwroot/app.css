@@ -649,3 +649,129 @@ a:hover {
     border-color: #dc2626;
     color: #b91c1c;
 }
+
+/* ---------------------------------------------------------
+   Bank Accounts – account-type badges
+   --------------------------------------------------------- */
+.vault-badge--bank-type-savings {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--bank-type-current {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--bank-type-fd {
+    background-color: #faf5ff;
+    color: #7e22ce;
+}
+
+.vault-badge--bank-type-rd {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+.vault-badge--bank-type-salary {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+
+.vault-badge--bank-type-other {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+/* ---------------------------------------------------------
+   Investments – type badges
+   --------------------------------------------------------- */
+.vault-badge--invest-stocks {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--invest-mf {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--invest-pension {
+    background-color: #faf5ff;
+    color: #7e22ce;
+}
+
+.vault-badge--invest-crypto {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+/* ---------------------------------------------------------
+   Investments – summary strip
+   --------------------------------------------------------- */
+.vault-invest-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+    align-items: stretch;
+}
+
+.vault-invest-summary__total,
+.vault-invest-summary__tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 7rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md, 0.5rem);
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    line-height: 1.2;
+}
+
+.vault-invest-summary__total {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.vault-invest-summary__count {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-text, #1e293b);
+}
+
+.vault-invest-summary__label {
+    font-size: 0.75rem;
+    color: var(--color-muted, #64748b);
+    margin-top: 0.15rem;
+    text-align: center;
+}
+
+.vault-invest-tile--stocks  { background-color: #eff6ff; border-color: #bfdbfe; }
+.vault-invest-tile--mf      { background-color: #f0fdf4; border-color: #bbf7d0; }
+.vault-invest-tile--pension { background-color: #faf5ff; border-color: #e9d5ff; }
+.vault-invest-tile--crypto  { background-color: #fff7ed; border-color: #fed7aa; }
+
+/* ---------------------------------------------------------
+   Investments – group headings
+   --------------------------------------------------------- */
+.vault-invest-group {
+    margin-bottom: 2rem;
+}
+
+.vault-invest-group__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+
+.vault-invest-group__count {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--color-muted, #64748b);
+}
