@@ -125,6 +125,14 @@ builder.Services.AddHttpClient<IPropertyApiClient, PropertyApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Typed HttpClient for the Emergency Fund API — shares the same base address.
+builder.Services.AddHttpClient<IEmergencyFundApiClient, EmergencyFundApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

@@ -914,3 +914,134 @@ a:hover {
     color: var(--color-muted);
 }
 
+/* ---------------------------------------------------------
+   Emergency Fund – summary banner and table
+   --------------------------------------------------------- */
+.vault-ef-summary {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.vault-ef-summary__total {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.vault-ef-summary__label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+}
+
+.vault-ef-summary__amount {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--color-primary, #2563eb);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Coverage indicator */
+.vault-ef-summary__coverage {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+}
+
+.vault-ef-summary__coverage--good {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.vault-ef-summary__coverage--warn {
+    background-color: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.vault-ef-summary__coverage--low {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.vault-ef-summary__hint {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+
+.vault-ef-expenses-input {
+    display: flex;
+    align-items: center;
+}
+
+/* Amount column — right-aligned with mono font */
+.vault-col--right {
+    text-align: right;
+}
+
+.vault-ef-amount {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+/* Instructions cell — soft truncation */
+.vault-ef-instructions {
+    display: inline-block;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    cursor: help;
+}
+
+/* Total row in table footer */
+.vault-ef-total-row {
+    background-color: var(--color-surface-alt, #f8fafc);
+    border-top: 2px solid var(--color-border);
+}
+
+/* Ghost button variant */
+.vault-btn--ghost {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-muted);
+}
+
+.vault-btn--ghost:hover {
+    background: var(--color-surface-alt, #f8fafc);
+}
+
+/* Small input variant */
+.vault-input--sm {
+    max-width: 160px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.9rem;
+}
+
+/* Textarea */
+.vault-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+
