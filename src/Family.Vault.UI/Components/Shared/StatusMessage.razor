@@ -1,0 +1,14 @@
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="vault-alert vault-alert--@Type.ToString().ToLowerInvariant()" role="alert">
+        @Message
+    </div>
+}
+
+@code {
+    /// <summary>The message text to display. When null or empty the component renders nothing.</summary>
+    [Parameter, EditorRequired] public string? Message { get; set; }
+
+    /// <summary>Controls the visual style of the alert. Defaults to <see cref="StatusType.Info"/>.</summary>
+    [Parameter] public StatusType Type { get; set; } = StatusType.Info;
+}

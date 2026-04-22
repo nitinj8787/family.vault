@@ -1,0 +1,777 @@
+/* =========================================================
+   Family Vault – Global Styles
+   Clean, minimal design using CSS custom properties.
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   Design tokens
+   --------------------------------------------------------- */
+:root {
+    --color-bg:        #f1f5f9;
+    --color-surface:   #ffffff;
+    --color-nav-bg:    #1e293b;
+    --color-nav-text:  rgba(255, 255, 255, 0.75);
+    --color-accent:    #3b82f6;
+    --color-accent-hv: #2563eb;
+    --color-success:   #16a34a;
+    --color-error:     #dc2626;
+    --color-warning:   #d97706;
+    --color-info:      #0369a1;
+    --color-text:      #1e293b;
+    --color-muted:     #64748b;
+    --color-border:    #e2e8f0;
+    --radius-sm:       4px;
+    --radius-md:       8px;
+    --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md:       0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ---------------------------------------------------------
+   Reset / base
+   --------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    line-height: 1.6;
+}
+
+h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    color: var(--color-text);
+}
+
+a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ---------------------------------------------------------
+   Layout
+   --------------------------------------------------------- */
+.vault-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.vault-main {
+    flex: 1;
+    background-color: var(--color-bg);
+}
+
+.vault-content {
+    padding: 2rem 2.5rem;
+    max-width: 900px;
+}
+
+/* ---------------------------------------------------------
+   Cards
+   --------------------------------------------------------- */
+.vault-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-sm);
+    max-width: 520px;
+}
+
+/* ---------------------------------------------------------
+   Form elements
+   --------------------------------------------------------- */
+.vault-form-field {
+    margin-bottom: 1.25rem;
+}
+
+.vault-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--color-text);
+}
+
+.vault-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    appearance: auto;
+    cursor: pointer;
+}
+
+.vault-select:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+    border-color: var(--color-accent);
+}
+
+.vault-file-input {
+    display: block;
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 0.4rem 0;
+    color: var(--color-muted);
+}
+
+.vault-file-info {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------
+   Buttons
+   --------------------------------------------------------- */
+.vault-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color 0.15s, opacity 0.15s;
+    text-decoration: none;
+}
+
+.vault-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.vault-btn--primary {
+    background-color: var(--color-accent);
+    color: #fff;
+    margin-top: 0.5rem;
+}
+
+.vault-btn--primary:hover:not(:disabled) {
+    background-color: var(--color-accent-hv);
+}
+
+.vault-btn--secondary {
+    background-color: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    margin-top: 0.5rem;
+}
+
+.vault-btn--secondary:hover:not(:disabled) {
+    background-color: rgba(59, 130, 246, 0.06);
+}
+
+/* ---------------------------------------------------------
+   Alerts / Status messages
+   --------------------------------------------------------- */
+.vault-alert {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    margin-top: 1.25rem;
+    border-left: 4px solid transparent;
+}
+
+.vault-alert--success {
+    background-color: #f0fdf4;
+    border-left-color: var(--color-success);
+    color: #166534;
+}
+
+.vault-alert--error {
+    background-color: #fef2f2;
+    border-left-color: var(--color-error);
+    color: #991b1b;
+}
+
+.vault-alert--warning {
+    background-color: #fffbeb;
+    border-left-color: var(--color-warning);
+    color: #92400e;
+}
+
+.vault-alert--info {
+    background-color: #f0f9ff;
+    border-left-color: var(--color-info);
+    color: #075985;
+}
+
+/* ---------------------------------------------------------
+   Table
+   --------------------------------------------------------- */
+.vault-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+}
+
+.vault-table th {
+    padding: 0.65rem 1rem;
+    background-color: #f8fafc;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.vault-table td {
+    padding: 0.7rem 1rem;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.vault-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.vault-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* ---------------------------------------------------------
+   Misc
+   --------------------------------------------------------- */
+.vault-loading {
+    color: var(--color-muted);
+    font-style: italic;
+}
+
+.vault-empty {
+    color: var(--color-muted);
+}
+
+.vault-count {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+}
+
+.vault-error-id {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------
+   Text inputs (profile form)
+   --------------------------------------------------------- */
+.vault-input {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.vault-input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+    border-color: var(--color-accent);
+}
+
+.vault-input--date {
+    max-width: 220px;
+}
+
+.vault-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ---------------------------------------------------------
+   Wide card variant (profile page)
+   --------------------------------------------------------- */
+.vault-card--wide {
+    max-width: 680px;
+    margin-bottom: 1.5rem;
+}
+
+/* ---------------------------------------------------------
+   Section title inside card
+   --------------------------------------------------------- */
+.vault-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 1.25rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+/* ---------------------------------------------------------
+   Required field marker
+   --------------------------------------------------------- */
+.vault-required {
+    color: var(--color-error);
+    margin-left: 2px;
+}
+
+/* ---------------------------------------------------------
+   Validation message
+   --------------------------------------------------------- */
+.vault-validation {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-error);
+    margin-top: 0.25rem;
+}
+
+/* ---------------------------------------------------------
+   Sub-cards (child / contact list items)
+   --------------------------------------------------------- */
+.vault-subcard {
+    background-color: #f8fafc;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.vault-subcard__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.vault-subcard__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ---------------------------------------------------------
+   Danger (remove) button
+   --------------------------------------------------------- */
+.vault-btn--danger {
+    background-color: transparent;
+    color: var(--color-error);
+    border: 1px solid var(--color-error);
+}
+
+.vault-btn--danger:hover:not(:disabled) {
+    background-color: rgba(220, 38, 38, 0.06);
+}
+
+/* ---------------------------------------------------------
+   Small button modifier
+   --------------------------------------------------------- */
+.vault-btn--sm {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+/* ---------------------------------------------------------
+   Profile actions row
+   --------------------------------------------------------- */
+.vault-profile-actions {
+    max-width: 680px;
+    margin-top: 0.5rem;
+}
+
+/* ---------------------------------------------------------
+   UK Assets – toolbar
+   --------------------------------------------------------- */
+.vault-assets-toolbar {
+    margin-bottom: 1.25rem;
+}
+
+/* ---------------------------------------------------------
+   Table wrapper (horizontal scroll on small screens)
+   --------------------------------------------------------- */
+.vault-table-wrapper {
+    overflow-x: auto;
+}
+
+/* ---------------------------------------------------------
+   UK Assets – actions cell
+   --------------------------------------------------------- */
+.vault-actions-cell {
+    display: flex;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------
+   Tax notes – truncate long text in the table cell
+   --------------------------------------------------------- */
+.vault-tax-notes {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------
+   Masked account number
+   --------------------------------------------------------- */
+.vault-masked {
+    font-family: monospace;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------
+   Category badges
+   --------------------------------------------------------- */
+.vault-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vault-badge--bank {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--isa {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--pension {
+    background-color: #faf5ff;
+    color: #7e22ce;
+}
+
+/* ---------------------------------------------------------
+   Modal overlay
+   --------------------------------------------------------- */
+.vault-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+/* ---------------------------------------------------------
+   Modal panel
+   --------------------------------------------------------- */
+.vault-modal {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.75rem;
+    position: relative;
+}
+
+.vault-modal--narrow {
+    max-width: 420px;
+}
+
+.vault-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.vault-modal__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text);
+}
+
+.vault-modal__close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--color-muted);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    line-height: 1;
+}
+
+.vault-modal__close:hover {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+.vault-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+/* ---------------------------------------------------------
+   India Assets – page subtitle
+   --------------------------------------------------------- */
+.vault-page-subtitle {
+    color: var(--color-muted);
+    margin-top: -0.5rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------
+   India Assets – legend row
+   --------------------------------------------------------- */
+.vault-india-legend {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+/* ---------------------------------------------------------
+   India Assets – NRE / NRO account-type badges
+   --------------------------------------------------------- */
+.vault-badge--nre {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--nro {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+/* ---------------------------------------------------------
+   India Assets – repatriation badges
+   --------------------------------------------------------- */
+.vault-badge--repatriable {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+
+.vault-badge--limited {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+/* ---------------------------------------------------------
+   India Assets – "Taxable in India" warning badge
+   --------------------------------------------------------- */
+.vault-badge--taxwarn {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+/* ---------------------------------------------------------
+   India Assets – category badge (neutral teal)
+   --------------------------------------------------------- */
+.vault-badge--india-cat {
+    background-color: #f0f9ff;
+    color: #0369a1;
+}
+
+/* ---------------------------------------------------------
+   India Assets – risk-highlighted table row (NRO)
+   --------------------------------------------------------- */
+.vault-row--risk {
+    background-color: #fff8f0;
+}
+
+.vault-row--risk:hover {
+    background-color: #fff1e0;
+}
+
+/* ---------------------------------------------------------
+   India Assets – status cell (may contain multiple badges)
+   --------------------------------------------------------- */
+.vault-india-status-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+/* ---------------------------------------------------------
+   India Assets – account-type advisory hint inside modal
+   --------------------------------------------------------- */
+.vault-india-hint {
+    font-size: 0.82rem;
+    margin-top: 0.4rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid transparent;
+}
+
+.vault-india-hint--ok {
+    background-color: #f0fdf4;
+    border-color: #16a34a;
+    color: #15803d;
+}
+
+.vault-india-hint--warn {
+    background-color: #fef2f2;
+    border-color: #dc2626;
+    color: #b91c1c;
+}
+
+/* ---------------------------------------------------------
+   Bank Accounts – account-type badges
+   --------------------------------------------------------- */
+.vault-badge--bank-type-savings {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--bank-type-current {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--bank-type-fd {
+    background-color: #faf5ff;
+    color: #7e22ce;
+}
+
+.vault-badge--bank-type-rd {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+.vault-badge--bank-type-salary {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+
+.vault-badge--bank-type-other {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+/* ---------------------------------------------------------
+   Investments – type badges
+   --------------------------------------------------------- */
+.vault-badge--invest-stocks {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--invest-mf {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--invest-pension {
+    background-color: #faf5ff;
+    color: #7e22ce;
+}
+
+.vault-badge--invest-crypto {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+/* ---------------------------------------------------------
+   Investments – summary strip
+   --------------------------------------------------------- */
+.vault-invest-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+    align-items: stretch;
+}
+
+.vault-invest-summary__total,
+.vault-invest-summary__tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 7rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md, 0.5rem);
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    line-height: 1.2;
+}
+
+.vault-invest-summary__total {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.vault-invest-summary__count {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-text, #1e293b);
+}
+
+.vault-invest-summary__label {
+    font-size: 0.75rem;
+    color: var(--color-muted, #64748b);
+    margin-top: 0.15rem;
+    text-align: center;
+}
+
+.vault-invest-tile--stocks  { background-color: #eff6ff; border-color: #bfdbfe; }
+.vault-invest-tile--mf      { background-color: #f0fdf4; border-color: #bbf7d0; }
+.vault-invest-tile--pension { background-color: #faf5ff; border-color: #e9d5ff; }
+.vault-invest-tile--crypto  { background-color: #fff7ed; border-color: #fed7aa; }
+
+/* ---------------------------------------------------------
+   Investments – group headings
+   --------------------------------------------------------- */
+.vault-invest-group {
+    margin-bottom: 2rem;
+}
+
+.vault-invest-group__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+
+.vault-invest-group__count {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--color-muted, #64748b);
+}

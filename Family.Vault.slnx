@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Family.Vault.API/Family.Vault.API.csproj" />
+    <Project Path="src/Family.Vault.Application/Family.Vault.Application.csproj" />
+    <Project Path="src/Family.Vault.Domain/Family.Vault.Domain.csproj" />
+    <Project Path="src/Family.Vault.Infrastructure/Family.Vault.Infrastructure.csproj" />
+    <Project Path="src/Family.Vault.UI/Family.Vault.UI.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,110 @@
+@page "/upload"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IVaultApiClient VaultApiClient
+@inject ILogger<DocumentUpload> Logger
+
+<PageTitle>Upload Document – Family Vault</PageTitle>
+
+<h1>Upload Document</h1>
+
+<div class="vault-card">
+    <div class="vault-form-field">
+        <label class="vault-label" for="category">Category</label>
+        <select id="category" class="vault-select" @bind="_selectedCategory">
+            <option value="Uk">UK</option>
+            <option value="India">India</option>
+            <option value="Insurance">Insurance</option>
+        </select>
+    </div>
+
+    <div class="vault-form-field">
+        <label class="vault-label">Document</label>
+        <InputFile OnChange="HandleFileSelected"
+                   accept=".pdf,.png,.jpg,.jpeg,.txt,.docx"
+                   class="vault-file-input"
+                   aria-label="Choose a document to upload" />
+        @if (_selectedFile is not null)
+        {
+            <p class="vault-file-info">
+                <strong>@_selectedFile.Name</strong> (@FormatSize(_selectedFile.Size))
+            </p>
+        }
+    </div>
+
+    <button class="vault-btn vault-btn--primary"
+            @onclick="UploadAsync"
+            disabled="@(_selectedFile is null || _isUploading)"
+            aria-busy="@_isUploading">
+        @(_isUploading ? "Uploading…" : "Upload Document")
+    </button>
+</div>
+
+@if (_statusMessage is not null)
+{
+    <StatusMessage Type="@_statusType" Message="@_statusMessage" />
+}
+
+@code {
+    private IBrowserFile? _selectedFile;
+    private string _selectedCategory = "Uk";
+    private bool _isUploading;
+    private string? _statusMessage;
+    private StatusType _statusType = StatusType.Info;
+
+    // Maximum size matched to the API's DocumentOptions default (20 MB).
+    private const long MaxFileSizeBytes = 20 * 1024 * 1024;
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _statusMessage = null;
+    }
+
+    private async Task UploadAsync()
+    {
+        if (_selectedFile is null) return;
+
+        if (_selectedFile.Size > MaxFileSizeBytes)
+        {
+            _statusMessage = $"File is too large ({FormatSize(_selectedFile.Size)}). Maximum allowed size is {FormatSize(MaxFileSizeBytes)}.";
+            _statusType = StatusType.Error;
+            return;
+        }
+
+        _isUploading = true;
+        _statusMessage = null;
+
+        try
+        {
+            await using var stream = _selectedFile.OpenReadStream(maxAllowedSize: MaxFileSizeBytes);
+
+            var result = await VaultApiClient.UploadDocumentAsync(
+                _selectedFile.Name,
+                _selectedFile.Size,
+                stream,
+                _selectedCategory);
+
+            _statusMessage = $"'{result.FileName}' uploaded successfully to {result.StoragePath}.";
+            _statusType = StatusType.Success;
+            _selectedFile = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Document upload failed for {FileName}", _selectedFile?.Name);
+            _statusMessage = $"Upload failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isUploading = false;
+        }
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1_024 => $"{bytes} B",
+        < 1_048_576 => $"{bytes / 1_024.0:F1} KB",
+        _ => $"{bytes / 1_048_576.0:F1} MB"
+    };
+}
