@@ -1,0 +1,6 @@
+@Family.Vault.API_HostAddress = http://localhost:5102
+
+GET {{Family.Vault.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
