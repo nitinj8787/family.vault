@@ -60,6 +60,9 @@ builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential()
 
 builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
+// Singleton so that in-memory profiles survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<IProfileService, ProfileService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();

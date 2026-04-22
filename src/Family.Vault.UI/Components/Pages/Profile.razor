@@ -1,0 +1,245 @@
+@page "/profile"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IProfileApiClient ProfileApiClient
+@inject ILogger<Profile> Logger
+
+<PageTitle>My Profile – Family Vault</PageTitle>
+
+<h1>Personal &amp; Contacts</h1>
+
+@if (_isLoading)
+{
+    <p class="vault-loading" role="status">Loading profile…</p>
+}
+else
+{
+    <EditForm Model="_profile" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        @* ── Personal Details ── *@
+        <div class="vault-card vault-card--wide">
+            <h2 class="vault-section-title">Personal Details</h2>
+
+            <div class="vault-form-field">
+                <label class="vault-label" for="fullName">
+                    Full Name <span class="vault-required" aria-hidden="true">*</span>
+                </label>
+                <InputText id="fullName"
+                           class="vault-input"
+                           @bind-Value="_profile.FullName"
+                           placeholder="e.g. Jane Smith" />
+                <ValidationMessage For="@(() => _profile.FullName)" class="vault-validation" />
+            </div>
+
+            <div class="vault-form-field">
+                <label class="vault-label" for="dob">Date of Birth</label>
+                <InputDate id="dob"
+                           class="vault-input vault-input--date"
+                           @bind-Value="_profile.DateOfBirth" />
+            </div>
+
+            <div class="vault-form-field">
+                <label class="vault-label" for="address">Address</label>
+                <InputTextArea id="address"
+                               class="vault-input vault-textarea"
+                               @bind-Value="_profile.Address"
+                               rows="3"
+                               placeholder="Full postal address" />
+                <ValidationMessage For="@(() => _profile.Address)" class="vault-validation" />
+            </div>
+
+            <div class="vault-form-field">
+                <label class="vault-label" for="spouse">Spouse / Partner Name</label>
+                <InputText id="spouse"
+                           class="vault-input"
+                           @bind-Value="_profile.SpouseName"
+                           placeholder="e.g. John Smith" />
+                <ValidationMessage For="@(() => _profile.SpouseName)" class="vault-validation" />
+            </div>
+        </div>
+
+        @* ── Children ── *@
+        <div class="vault-card vault-card--wide">
+            <h2 class="vault-section-title">Children</h2>
+
+            @for (int i = 0; i < _profile.Children.Count; i++)
+            {
+                var index = i;
+                <div class="vault-subcard">
+                    <div class="vault-subcard__header">
+                        <span class="vault-subcard__label">Child @(index + 1)</span>
+                        <button type="button"
+                                class="vault-btn vault-btn--danger vault-btn--sm"
+                                @onclick="() => RemoveChild(index)"
+                                aria-label="Remove child @(index + 1)">
+                            Remove
+                        </button>
+                    </div>
+
+                    <div class="vault-form-field">
+                        <label class="vault-label">
+                            Name <span class="vault-required" aria-hidden="true">*</span>
+                        </label>
+                        <InputText class="vault-input"
+                                   @bind-Value="_profile.Children[index].Name"
+                                   placeholder="Child's full name" />
+                        <ValidationMessage For="@(() => _profile.Children[index].Name)"
+                                           class="vault-validation" />
+                    </div>
+
+                    <div class="vault-form-field">
+                        <label class="vault-label">Date of Birth</label>
+                        <InputDate class="vault-input vault-input--date"
+                                   @bind-Value="_profile.Children[index].DateOfBirth" />
+                    </div>
+                </div>
+            }
+
+            <button type="button"
+                    class="vault-btn vault-btn--secondary"
+                    @onclick="AddChild">
+                + Add Child
+            </button>
+        </div>
+
+        @* ── Emergency Contacts ── *@
+        <div class="vault-card vault-card--wide">
+            <h2 class="vault-section-title">Emergency Contacts</h2>
+
+            @for (int i = 0; i < _profile.EmergencyContacts.Count; i++)
+            {
+                var index = i;
+                <div class="vault-subcard">
+                    <div class="vault-subcard__header">
+                        <span class="vault-subcard__label">Contact @(index + 1)</span>
+                        <button type="button"
+                                class="vault-btn vault-btn--danger vault-btn--sm"
+                                @onclick="() => RemoveContact(index)"
+                                aria-label="Remove contact @(index + 1)">
+                            Remove
+                        </button>
+                    </div>
+
+                    <div class="vault-form-field">
+                        <label class="vault-label">
+                            Name <span class="vault-required" aria-hidden="true">*</span>
+                        </label>
+                        <InputText class="vault-input"
+                                   @bind-Value="_profile.EmergencyContacts[index].Name"
+                                   placeholder="Contact's full name" />
+                        <ValidationMessage For="@(() => _profile.EmergencyContacts[index].Name)"
+                                           class="vault-validation" />
+                    </div>
+
+                    <div class="vault-form-field">
+                        <label class="vault-label">
+                            Relationship <span class="vault-required" aria-hidden="true">*</span>
+                        </label>
+                        <InputText class="vault-input"
+                                   @bind-Value="_profile.EmergencyContacts[index].Relationship"
+                                   placeholder="e.g. Sister, GP, Employer" />
+                        <ValidationMessage For="@(() => _profile.EmergencyContacts[index].Relationship)"
+                                           class="vault-validation" />
+                    </div>
+
+                    <div class="vault-form-field">
+                        <label class="vault-label">
+                            Phone Number <span class="vault-required" aria-hidden="true">*</span>
+                        </label>
+                        <InputText class="vault-input"
+                                   @bind-Value="_profile.EmergencyContacts[index].PhoneNumber"
+                                   placeholder="+44 7700 900000" />
+                        <ValidationMessage For="@(() => _profile.EmergencyContacts[index].PhoneNumber)"
+                                           class="vault-validation" />
+                    </div>
+                </div>
+            }
+
+            <button type="button"
+                    class="vault-btn vault-btn--secondary"
+                    @onclick="AddContact">
+                + Add Emergency Contact
+            </button>
+        </div>
+
+        @* ── Actions ── *@
+        <div class="vault-profile-actions">
+            <ValidationSummary class="vault-alert vault-alert--error" />
+            <button type="submit"
+                    class="vault-btn vault-btn--primary"
+                    disabled="@_isSaving"
+                    aria-busy="@_isSaving">
+                @(_isSaving ? "Saving…" : "Save Profile")
+            </button>
+        </div>
+    </EditForm>
+
+    @if (_statusMessage is not null)
+    {
+        <StatusMessage Type="@_statusType" Message="@_statusMessage" />
+    }
+}
+
+@code {
+    private ProfileFormModel _profile = new();
+    private bool _isLoading = true;
+    private bool _isSaving;
+    private string? _statusMessage;
+    private StatusType _statusType = StatusType.Info;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var existing = await ProfileApiClient.GetProfileAsync();
+            if (existing is not null)
+                _profile = existing;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load profile");
+            _statusMessage = "Could not load your saved profile. You can fill in the form and save.";
+            _statusType = StatusType.Warning;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+        _statusMessage = null;
+
+        try
+        {
+            _profile = await ProfileApiClient.SaveProfileAsync(_profile);
+            _statusMessage = "Profile saved successfully.";
+            _statusType = StatusType.Success;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save profile");
+            _statusMessage = $"Save failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void AddChild() =>
+        _profile.Children.Add(new ChildFormModel());
+
+    private void RemoveChild(int index) =>
+        _profile.Children.RemoveAt(index);
+
+    private void AddContact() =>
+        _profile.EmergencyContacts.Add(new EmergencyContactFormModel());
+
+    private void RemoveContact(int index) =>
+        _profile.EmergencyContacts.RemoveAt(index);
+}
