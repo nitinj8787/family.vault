@@ -1,0 +1,73 @@
+@page "/"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IVaultApiClient VaultApiClient
+@inject ILogger<VaultItems> Logger
+
+<PageTitle>My Documents – Family Vault</PageTitle>
+
+<h1>My Documents</h1>
+
+@if (_isLoading)
+{
+    <p class="vault-loading" role="status">Loading documents…</p>
+}
+else if (_error is not null)
+{
+    <StatusMessage Type="StatusType.Error" Message="@_error" />
+    <button class="vault-btn vault-btn--secondary" @onclick="LoadItemsAsync">Retry</button>
+}
+else if (_items.Count == 0)
+{
+    <p class="vault-empty">
+        No documents uploaded yet.
+        <a href="/upload">Upload your first document</a>.
+    </p>
+}
+else
+{
+    <p class="vault-count">@_items.Count document(s) stored</p>
+    <table class="vault-table" aria-label="Stored documents">
+        <thead>
+            <tr>
+                <th scope="col">File Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in _items)
+            {
+                <tr>
+                    <td>@item.FileName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<VaultFileItem> _items = [];
+    private bool _isLoading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync() => await LoadItemsAsync();
+
+    private async Task LoadItemsAsync()
+    {
+        _isLoading = true;
+        _error = null;
+
+        try
+        {
+            _items = await VaultApiClient.GetVaultItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load vault items");
+            _error = "Failed to load documents. Please try again later.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

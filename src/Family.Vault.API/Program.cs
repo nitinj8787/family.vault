@@ -8,6 +8,7 @@ using Family.Vault.Application.Services;
 using Family.Vault.Infrastructure.Secrets;
 using Family.Vault.Infrastructure.Storage;
 using Microsoft.Identity.Web;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +46,9 @@ builder.Services.AddAuthorization(options =>
               .RequireRole(Roles.Admin));
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<VaultUploadOptions>(builder.Configuration.GetSection(VaultUploadOptions.SectionName));

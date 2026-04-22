@@ -1,0 +1,34 @@
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<nav class="vault-nav">
+    <div class="vault-nav__brand">
+        <span class="vault-nav__icon" aria-hidden="true">🔒</span>
+        <span class="vault-nav__title">Family Vault</span>
+    </div>
+
+    <ul class="vault-nav__links" role="list">
+        <li>
+            <NavLink href="/" Match="NavLinkMatch.All" class="vault-nav__link">
+                <span aria-hidden="true">📁</span> My Documents
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="/upload" class="vault-nav__link">
+                <span aria-hidden="true">⬆️</span> Upload
+            </NavLink>
+        </li>
+    </ul>
+
+    <div class="vault-nav__footer">
+        <AuthorizeView>
+            <Authorized>
+                <span class="vault-nav__user">@context.User.Identity?.Name</span>
+                <a href="MicrosoftIdentity/Account/SignOut" class="vault-nav__signout">Sign out</a>
+            </Authorized>
+            <NotAuthorized>
+                <a href="MicrosoftIdentity/Account/SignIn" class="vault-nav__signout">Sign in</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</nav>

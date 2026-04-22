@@ -1,0 +1,17 @@
+.vault-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.vault-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg);
+}
+
+.vault-content {
+    padding: 2rem;
+    max-width: 900px;
+    width: 100%;
+}
