@@ -1,0 +1,390 @@
+@page "/wills-legal"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IWillsApiClient WillsApiClient
+@inject ILogger<WillsLegal> Logger
+
+<PageTitle>Wills &amp; Legal – Family Vault</PageTitle>
+
+<h1>Wills &amp; Legal</h1>
+<p class="vault-page-subtitle">
+    Track will status, location, and executor details for each jurisdiction you hold assets in.
+</p>
+
+@if (_isLoading)
+{
+    <p class="vault-loading" role="status">Loading wills &amp; legal entries…</p>
+}
+else
+{
+    @* ── CRITICAL: missing-will banner ── *@
+    @if (_missingCount > 0)
+    {
+        <div class="vault-wills-critical" role="alert">
+            <span class="vault-wills-critical__icon" aria-hidden="true">🚨</span>
+            <div>
+                <strong>CRITICAL — Missing will@(_missingCount > 1 ? "s" : "") detected</strong>
+                <p class="vault-wills-critical__detail">
+                    @_missingCount
+                    @(_missingCount == 1 ? "jurisdiction" : "jurisdictions")
+                    @(_missingCount == 1 ? "has" : "have") no will recorded.
+                    Without a valid will your estate may not be distributed according to your wishes.
+                    Please consult a solicitor as soon as possible.
+                </p>
+            </div>
+        </div>
+    }
+
+    @* ── All-clear banner ── *@
+    @if (_entries.Count > 0 && _missingCount == 0)
+    {
+        <div class="vault-wills-allclear" role="status">
+            <span aria-hidden="true">✅</span>
+            All jurisdictions have a will on record.
+        </div>
+    }
+
+    @* ── Toolbar ── *@
+    <div class="vault-assets-toolbar">
+        <button class="vault-btn vault-btn--primary" @onclick="OpenAddDialog">
+            + Add Entry
+        </button>
+    </div>
+
+    @* ── Status message ── *@
+    @if (_statusMessage is not null)
+    {
+        <StatusMessage Type="@_statusType" Message="@_statusMessage" />
+    }
+
+    @if (_entries.Count == 0)
+    {
+        <p class="vault-empty">
+            No entries recorded yet. Click <strong>+ Add Entry</strong> to get started.
+        </p>
+    }
+    else
+    {
+        <div class="vault-table-wrapper">
+            <table class="vault-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Status</th>
+                        <th scope="col">Country / Jurisdiction</th>
+                        <th scope="col">Will Exists?</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Executor</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in _entries)
+                    {
+                        <tr class="@(entry.IsMissingWill ? "vault-wills-row--critical" : "vault-wills-row--ok")">
+                            <td class="vault-wills-status-cell">
+                                @if (entry.IsMissingWill)
+                                {
+                                    <span class="vault-wills-indicator vault-wills-indicator--critical"
+                                          title="No will exists for this jurisdiction — CRITICAL">
+                                        🚨
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="vault-wills-indicator vault-wills-indicator--ok"
+                                          title="Will exists">
+                                        ✅
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="vault-wills-country">@entry.Country</span>
+                            </td>
+                            <td>
+                                @if (entry.WillExists)
+                                {
+                                    <span class="vault-wills-pill vault-wills-pill--yes">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="vault-wills-pill vault-wills-pill--no">No</span>
+                                }
+                            </td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(entry.Location))
+                                {
+                                    <span class="vault-muted">—</span>
+                                }
+                                else
+                                {
+                                    @entry.Location
+                                }
+                            </td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(entry.Executor))
+                                {
+                                    <span class="vault-muted">—</span>
+                                }
+                                else
+                                {
+                                    @entry.Executor
+                                }
+                            </td>
+                            <td class="vault-actions-cell">
+                                <button class="vault-btn vault-btn--secondary vault-btn--sm"
+                                        @onclick="() => OpenEditDialog(entry)">
+                                    Edit
+                                </button>
+                                <button class="vault-btn vault-btn--danger vault-btn--sm"
+                                        @onclick="() => OpenDeleteConfirm(entry)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@* ── Add / Edit Modal ── *@
+@if (_showDialog)
+{
+    <div class="vault-modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="wills-dialog-title">
+        <div class="vault-modal">
+            <div class="vault-modal__header">
+                <h2 id="wills-dialog-title" class="vault-modal__title">
+                    @(_editModel.IsNew ? "Add Will Entry" : "Edit Will Entry")
+                </h2>
+                <button class="vault-modal__close" @onclick="CloseDialog" aria-label="Close">✕</button>
+            </div>
+
+            <EditForm Model="_editModel" OnValidSubmit="SaveEntryAsync">
+                <DataAnnotationsValidator />
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="willsCountry">
+                        Country / Jurisdiction
+                        <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="willsCountry" class="vault-input" @bind-Value="_editModel.Country"
+                               placeholder="e.g. United Kingdom, India" />
+                    <ValidationMessage For="@(() => _editModel.Country)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field vault-form-field--checkbox">
+                    <InputCheckbox id="willsExists" @bind-Value="_editModel.WillExists" />
+                    <label class="vault-label vault-label--inline" for="willsExists">
+                        Will exists for this jurisdiction
+                    </label>
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="willsLocation">Location</label>
+                    <InputText id="willsLocation" class="vault-input" @bind-Value="_editModel.Location"
+                               placeholder="e.g. Solicitor – Smith &amp; Co, safe deposit box" />
+                    <ValidationMessage For="@(() => _editModel.Location)" class="vault-validation" />
+                    <span class="vault-hint">Where is the original will stored?</span>
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="willsExecutor">Executor</label>
+                    <InputText id="willsExecutor" class="vault-input" @bind-Value="_editModel.Executor"
+                               placeholder="Full name of the appointed executor" />
+                    <ValidationMessage For="@(() => _editModel.Executor)" class="vault-validation" />
+                </div>
+
+                <div class="vault-modal__footer">
+                    <button type="button" class="vault-btn vault-btn--secondary"
+                            @onclick="CloseDialog">
+                        Cancel
+                    </button>
+                    <button type="submit" class="vault-btn vault-btn--primary"
+                            disabled="@_isSaving" aria-busy="@_isSaving">
+                        @(_isSaving ? "Saving…" : "Save")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ── Delete confirmation Modal ── *@
+@if (_deleteTarget is not null)
+{
+    <div class="vault-modal-overlay" role="alertdialog" aria-modal="true"
+         aria-labelledby="wills-delete-title">
+        <div class="vault-modal vault-modal--narrow">
+            <div class="vault-modal__header">
+                <h2 id="wills-delete-title" class="vault-modal__title">Delete Entry</h2>
+            </div>
+            <p>
+                Are you sure you want to delete the will entry for
+                <strong>@_deleteTarget.Country</strong>?
+                This action cannot be undone.
+            </p>
+            <div class="vault-modal__footer">
+                <button class="vault-btn vault-btn--secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="vault-btn vault-btn--danger" @onclick="ConfirmDeleteAsync"
+                        disabled="@_isSaving" aria-busy="@_isSaving">
+                    @(_isSaving ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<WillDisplayModel> _entries = [];
+    private bool _isLoading = true;
+    private bool _isSaving;
+
+    private string? _statusMessage;
+    private StatusType _statusType = StatusType.Info;
+
+    private bool _showDialog;
+    private WillFormModel _editModel = new();
+    private WillDisplayModel? _deleteTarget;
+
+    private int _missingCount;
+
+    protected override async Task OnInitializedAsync() => await LoadEntriesAsync();
+
+    private async Task LoadEntriesAsync()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var items = await WillsApiClient.GetAllAsync();
+            _entries = [.. items];
+            RefreshWarnings();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load will entries");
+            _statusMessage = "Could not load wills & legal entries. Please try again.";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // ── Warning logic ────────────────────────────────────────────────────
+
+    private void RefreshWarnings()
+    {
+        _missingCount = _entries.Count(e => e.IsMissingWill);
+    }
+
+    // ── Dialog helpers ────────────────────────────────────────────────────
+
+    private void OpenAddDialog()
+    {
+        _editModel = new WillFormModel();
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void OpenEditDialog(WillDisplayModel entry)
+    {
+        _editModel = new WillFormModel
+        {
+            Id = entry.Id,
+            Country = entry.Country,
+            WillExists = entry.WillExists,
+            Location = entry.Location,
+            Executor = entry.Executor
+        };
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+        _editModel = new WillFormModel();
+    }
+
+    // ── Save ─────────────────────────────────────────────────────────────
+
+    private async Task SaveEntryAsync()
+    {
+        _isSaving = true;
+        _statusMessage = null;
+
+        try
+        {
+            WillDisplayModel saved;
+
+            if (_editModel.IsNew)
+            {
+                saved = await WillsApiClient.AddAsync(_editModel);
+                _entries.Add(saved);
+                _statusMessage = $"Will entry for {saved.Country} added.";
+            }
+            else
+            {
+                saved = await WillsApiClient.UpdateAsync(_editModel);
+                var idx = _entries.FindIndex(e => e.Id == saved.Id);
+                if (idx >= 0) _entries[idx] = saved;
+                _statusMessage = $"Will entry for {saved.Country} updated.";
+            }
+
+            RefreshWarnings();
+            _statusType = StatusType.Success;
+            _showDialog = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save will entry");
+            _statusMessage = $"Save failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────
+
+    private void OpenDeleteConfirm(WillDisplayModel entry)
+    {
+        _deleteTarget = entry;
+        _statusMessage = null;
+    }
+
+    private void CancelDelete() => _deleteTarget = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget is null) return;
+
+        _isSaving = true;
+
+        try
+        {
+            await WillsApiClient.DeleteAsync(_deleteTarget.Id);
+            _entries.RemoveAll(e => e.Id == _deleteTarget.Id);
+            _statusMessage = $"Will entry for {_deleteTarget.Country} deleted.";
+            _statusType = StatusType.Success;
+            _deleteTarget = null;
+            RefreshWarnings();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete will entry {EntryId}", _deleteTarget?.Id);
+            _statusMessage = $"Delete failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

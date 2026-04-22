@@ -90,6 +90,9 @@ builder.Services.AddSingleton<INomineeService, NomineeService>();
 // Singleton so that in-memory tax entries survive across requests.
 // Replace with a scoped, DB-backed implementation for production.
 builder.Services.AddSingleton<ITaxService, TaxService>();
+// Singleton so that in-memory wills entries survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<IWillsService, WillsService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();

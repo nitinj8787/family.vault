@@ -149,6 +149,14 @@ builder.Services.AddHttpClient<ITaxApiClient, TaxApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Typed HttpClient for the Wills & Legal API — shares the same base address.
+builder.Services.AddHttpClient<IWillsApiClient, WillsApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
