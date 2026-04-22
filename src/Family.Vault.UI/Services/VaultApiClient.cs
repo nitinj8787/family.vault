@@ -3,24 +3,20 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Family.Vault.UI.Models;
-using Microsoft.Identity.Web;
 
 namespace Family.Vault.UI.Services;
 
 /// <summary>
-/// HTTP client that calls the FamilyVault API, acquiring a bearer token for the
-/// signed-in user on every request via <see cref="ITokenAcquisition"/>.
+/// HTTP client that calls the FamilyVault API.
+/// Bearer token acquisition is delegated to <see cref="ITokenProvider"/>, keeping
+/// this class independent of the underlying identity mechanism (Azure AD, placeholder,
+/// or any future provider).
 /// </summary>
 public sealed class VaultApiClient(
     HttpClient httpClient,
-    ITokenAcquisition tokenAcquisition,
-    IConfiguration configuration,
+    ITokenProvider tokenProvider,
     ILogger<VaultApiClient> logger) : IVaultApiClient
 {
-    private readonly string[] _apiScopes =
-        configuration.GetSection("VaultApi:Scopes").Get<string[]>()
-        ?? throw new InvalidOperationException("VaultApi:Scopes is not configured.");
-
     // Shared options: camelCase/PascalCase-insensitive + string enum support.
     // Initialized via new() + object initializer; the Converters list is set once
     // before any instance of this class is used, so initialization is safe.
@@ -33,12 +29,10 @@ public sealed class VaultApiClient(
     public async Task<IReadOnlyList<VaultFileItem>> GetVaultItemsAsync(
         CancellationToken cancellationToken = default)
     {
-        var token = await AcquireTokenAsync();
-
         logger.LogInformation("Fetching vault items from API");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, "api/vault");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await AttachAuthorizationAsync(request, cancellationToken);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -58,8 +52,6 @@ public sealed class VaultApiClient(
         string category,
         CancellationToken cancellationToken = default)
     {
-        var token = await AcquireTokenAsync();
-
         logger.LogInformation(
             "Uploading document {FileName} (category={Category}, size={FileSizeBytes} bytes)",
             fileName, category, fileSizeBytes);
@@ -75,7 +67,7 @@ public sealed class VaultApiClient(
         {
             Content = formContent
         };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await AttachAuthorizationAsync(request, cancellationToken);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
 
@@ -108,8 +100,21 @@ public sealed class VaultApiClient(
     // -----------------------------------------------------------------
 
     /// <summary>
-    /// Acquires (or retrieves from cache) a bearer token for the signed-in user.
+    /// Acquires a bearer token from <see cref="ITokenProvider"/> and attaches it to
+    /// <paramref name="request"/> as a per-request Authorization header.
+    /// If the provider returns an empty or null token (e.g. the placeholder in dev
+    /// when no static token is configured) no Authorization header is set, so the
+    /// request is sent without credentials.
     /// </summary>
-    private async Task<string> AcquireTokenAsync() =>
-        await tokenAcquisition.GetAccessTokenForUserAsync(_apiScopes);
+    private async Task AttachAuthorizationAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        var token = await tokenProvider.GetTokenAsync(cancellationToken);
+        if (!string.IsNullOrEmpty(token))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+    }
 }
+

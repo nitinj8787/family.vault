@@ -38,6 +38,29 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpContextAccessor();
 
+// ---------------------------------------------------------------------------
+// Token provider – selectable via VaultApi:UseAzureAdAuth (default: false).
+//
+//   false (default / development) → PlaceholderTokenProvider
+//     Reads a static token from VaultApi:BearerToken, or sends requests
+//     unauthenticated when that key is absent.  Safe for local runs against
+//     an API with auth disabled.
+//
+//   true (production) → AzureAdTokenProvider
+//     Acquires an MSAL-cached bearer token for the signed-in user via
+//     ITokenAcquisition.  Requires a fully configured AzureAd section.
+// ---------------------------------------------------------------------------
+var useAzureAdAuth = builder.Configuration.GetValue<bool>("VaultApi:UseAzureAdAuth");
+
+if (useAzureAdAuth)
+{
+    builder.Services.AddScoped<ITokenProvider, AzureAdTokenProvider>();
+}
+else
+{
+    builder.Services.AddSingleton<ITokenProvider, PlaceholderTokenProvider>();
+}
+
 // Typed HttpClient for the vault API. The base address is read from configuration.
 builder.Services.AddHttpClient<IVaultApiClient, VaultApiClient>(client =>
 {
