@@ -75,6 +75,9 @@ builder.Services.AddSingleton<IBankAccountService, BankAccountService>();
 // Singleton so that in-memory investments survive across requests.
 // Replace with a scoped, DB-backed implementation for production.
 builder.Services.AddSingleton<IInvestmentService, InvestmentService>();
+// Singleton so that in-memory insurance policies survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<IInsuranceService, InsuranceService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
@@ -139,4 +142,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
