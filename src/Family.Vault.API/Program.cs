@@ -1,6 +1,7 @@
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Configuration;
 using Family.Vault.Application.Services;
+using Family.Vault.Infrastructure.Database;
 using Family.Vault.Infrastructure.Secrets;
 using Family.Vault.Infrastructure.Storage;
 using Microsoft.Identity.Web;
@@ -54,45 +55,40 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<VaultUploadOptions>(builder.Configuration.GetSection(VaultUploadOptions.SectionName));
 builder.Services.Configure<DocumentOptions>(builder.Configuration.GetSection(DocumentOptions.SectionName));
 
+// ---------------------------------------------------------------------------
+// SQLite — connection factory and database initialisation.
+// The connection string is read from "Sqlite:ConnectionString" in configuration.
+// ---------------------------------------------------------------------------
+var sqliteConnectionString = builder.Configuration["Sqlite:ConnectionString"]
+    ?? throw new InvalidOperationException(
+        "SQLite configuration is missing required value (Sqlite:ConnectionString).");
+
+builder.Services.AddSingleton(new SqliteConnectionFactory(sqliteConnectionString));
+
+// ---------------------------------------------------------------------------
+// Service registrations – SQLite-backed implementations.
+// All asset-domain services are registered as Scoped so each HTTP request gets
+// its own logical unit of work.  SqliteConnectionFactory is Singleton and
+// creates a new connection per call.
+// ---------------------------------------------------------------------------
+builder.Services.AddScoped<IProfileService, SqliteProfileService>();
+builder.Services.AddScoped<IUkAssetService, SqliteUkAssetService>();
+builder.Services.AddScoped<IIndiaAssetService, SqliteIndiaAssetService>();
+builder.Services.AddScoped<IBankAccountService, SqliteBankAccountService>();
+builder.Services.AddScoped<IInvestmentService, SqliteInvestmentService>();
+builder.Services.AddScoped<IInsuranceService, SqliteInsuranceService>();
+builder.Services.AddScoped<IPropertyService, SqlitePropertyService>();
+builder.Services.AddScoped<IEmergencyFundService, SqliteEmergencyFundService>();
+builder.Services.AddScoped<INomineeService, SqliteNomineeService>();
+builder.Services.AddScoped<ITaxService, SqliteTaxService>();
+builder.Services.AddScoped<IWillsService, SqliteWillsService>();
+
+builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
+
 // Register DefaultAzureCredential as a singleton so that token caching is shared across all
 // consumers and re-authentication round-trips are minimised.
 builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential());
-
-builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
-builder.Services.AddScoped<IDocumentService, DocumentService>();
-// Singleton so that in-memory profiles survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IProfileService, ProfileService>();
-// Singleton so that in-memory UK assets survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IUkAssetService, UkAssetService>();
-// Singleton so that in-memory India assets survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IIndiaAssetService, IndiaAssetService>();
-// Singleton so that in-memory bank accounts survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IBankAccountService, BankAccountService>();
-// Singleton so that in-memory investments survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IInvestmentService, InvestmentService>();
-// Singleton so that in-memory insurance policies survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IInsuranceService, InsuranceService>();
-// Singleton so that in-memory properties survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IPropertyService, PropertyService>();
-// Singleton so that in-memory emergency fund entries survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IEmergencyFundService, EmergencyFundService>();
-// Singleton so that in-memory nominee entries survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<INomineeService, NomineeService>();
-// Singleton so that in-memory tax entries survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<ITaxService, TaxService>();
-// Singleton so that in-memory wills entries survive across requests.
-// Replace with a scoped, DB-backed implementation for production.
-builder.Services.AddSingleton<IWillsService, WillsService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
@@ -139,6 +135,13 @@ builder.Services.AddSingleton<IKeyVaultService>(serviceProvider =>
 });
 
 var app = builder.Build();
+
+// ---------------------------------------------------------------------------
+// Initialize the SQLite database schema on startup.
+// All DDL statements use IF NOT EXISTS so this is safe to run on every start.
+// ---------------------------------------------------------------------------
+var dbLogger = app.Services.GetRequiredService<ILogger<Program>>();
+await DatabaseInitializer.InitializeAsync(sqliteConnectionString, dbLogger);
 
 app.UseSwagger();
 app.UseSwaggerUI();
