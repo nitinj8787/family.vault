@@ -849,3 +849,68 @@ a:hover {
     margin: 0;
     font-size: 0.9rem;
 }
+
+/* ---------------------------------------------------------
+   Property & Loans – country tags, liability row, group headings
+   --------------------------------------------------------- */
+.vault-prop-group {
+    margin-bottom: 2rem;
+}
+
+.vault-prop-group__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+
+.vault-prop-group__count {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--color-muted);
+}
+
+.vault-badge--prop-country-uk {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--prop-country-india {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+/* Liability badge shown inline next to asset name */
+.vault-badge--liability {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    margin-left: 0.5rem;
+    font-size: 0.7rem;
+}
+
+/* Row highlight for assets with a loan linked */
+.vault-row--liability {
+    background-color: #fef9f0;
+}
+
+.vault-row--liability:hover {
+    background-color: #fef0d9;
+}
+
+/* Truncate long documents-location text in the table */
+.vault-doc-location {
+    display: inline-block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.vault-muted {
+    color: var(--color-muted);
+}
+

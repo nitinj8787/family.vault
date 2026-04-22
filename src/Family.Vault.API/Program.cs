@@ -78,6 +78,9 @@ builder.Services.AddSingleton<IInvestmentService, InvestmentService>();
 // Singleton so that in-memory insurance policies survive across requests.
 // Replace with a scoped, DB-backed implementation for production.
 builder.Services.AddSingleton<IInsuranceService, InsuranceService>();
+// Singleton so that in-memory properties survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<IPropertyService, PropertyService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
