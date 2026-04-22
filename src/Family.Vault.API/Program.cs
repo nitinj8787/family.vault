@@ -1,14 +1,48 @@
 using Azure.Core;
 using Azure.Identity;
+using Family.Vault.API.Authorization;
 using Family.Vault.API.Configuration;
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Services;
 using Family.Vault.Infrastructure.Secrets;
 using Family.Vault.Infrastructure.Storage;
+using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddConsole();
+
+// ---------------------------------------------------------------------------
+// Authentication – Azure AD (Microsoft Entra ID) via JwtBearer.
+// Microsoft.Identity.Web validates the token signature, issuer, audience, and
+// lifetime automatically, using Azure AD's OIDC discovery metadata. All
+// token validation parameters are set to secure-by-default values; only the
+// values loaded from the "AzureAd" configuration section are customised.
+// ---------------------------------------------------------------------------
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+
+// ---------------------------------------------------------------------------
+// Authorization – role-based policies.
+// Roles are carried as "roles" claims inside the Azure AD access token and are
+// assigned through App Role assignments in the Azure AD portal.
+// ---------------------------------------------------------------------------
+builder.Services.AddAuthorization(options =>
+{
+    // Any authenticated FamilyUser or Admin can list and upload vault items.
+    options.AddPolicy(AuthorizationPolicies.FamilyMember, policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireRole(Roles.FamilyUser, Roles.Admin));
+
+    // Downloads are also accessible to EmergencyAccess users.
+    options.AddPolicy(AuthorizationPolicies.VaultReader, policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireRole(Roles.FamilyUser, Roles.Admin, Roles.EmergencyAccess));
+
+    // Privileged administrative operations are restricted to Admins only.
+    options.AddPolicy(AuthorizationPolicies.AdminOnly, policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireRole(Roles.Admin));
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -76,6 +110,11 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Authentication must come before Authorization in the middleware pipeline.
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

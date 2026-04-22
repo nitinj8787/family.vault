@@ -1,6 +1,8 @@
 using Family.Vault.Application.Abstractions;
+using Family.Vault.API.Authorization;
 using Family.Vault.API.Configuration;
 using Family.Vault.Application.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -8,6 +10,7 @@ namespace Family.Vault.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public sealed class VaultController(
     IFamilyVaultService familyVaultService,
     ILogger<VaultController> logger,
@@ -16,7 +19,10 @@ public sealed class VaultController(
     private readonly VaultUploadOptions _uploadOptions = uploadOptions.Value;
 
     [HttpGet]
+    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
         var items = await familyVaultService.GetVaultItemsAsync(cancellationToken);
@@ -25,7 +31,10 @@ public sealed class VaultController(
     }
 
     [HttpGet("download/{fileName}")]
+    [Authorize(Policy = AuthorizationPolicies.VaultReader)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Download(string fileName, CancellationToken cancellationToken)
     {
@@ -61,8 +70,11 @@ public sealed class VaultController(
     }
 
     [HttpPost("upload")]
+    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
@@ -88,4 +100,3 @@ public sealed class VaultController(
         return Accepted();
     }
 }
-
