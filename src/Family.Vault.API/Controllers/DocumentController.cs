@@ -17,6 +17,22 @@ public sealed class DocumentController(
     ILogger<DocumentController> logger) : ControllerBase
 {
     /// <summary>
+    /// Returns all document metadata records for the currently authenticated user.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
+    [ProducesResponseType(typeof(IReadOnlyList<DocumentMetadataResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        var docs = await documentService.GetAllAsync(userId, cancellationToken);
+        logger.LogInformation("Returning {Count} documents for user {UserId}", docs.Count, userId);
+        return Ok(docs);
+    }
+
+    /// <summary>
     /// Uploads a document to family vault storage under the specified category.
     /// </summary>
     /// <param name="file">The file to upload.</param>
@@ -40,6 +56,8 @@ public sealed class DocumentController(
             return BadRequest("File is empty.");
         }
 
+        var userId = GetUserId();
+
         await using var stream = file.OpenReadStream();
 
         var request = new DocumentUploadRequest(
@@ -52,7 +70,7 @@ public sealed class DocumentController(
 
         try
         {
-            response = await documentService.UploadAsync(request, cancellationToken);
+            response = await documentService.UploadAsync(userId, request, cancellationToken);
         }
         catch (DocumentValidationException ex)
         {
@@ -64,6 +82,56 @@ public sealed class DocumentController(
             return BadRequest(ex.Message);
         }
 
-        return CreatedAtAction(nameof(Upload), response);
+        return CreatedAtAction(nameof(GetAll), response);
     }
+
+    /// <summary>
+    /// Downloads a document by its unique identifier for the currently authenticated user.
+    /// </summary>
+    [HttpGet("download/{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.VaultReader)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+
+        logger.LogInformation(
+            "Download requested for document {DocId} by user {UserId}", id, userId);
+
+        var memoryStream = new MemoryStream();
+        string fileName;
+
+        try
+        {
+            fileName = await documentService.DownloadAsync(userId, id, memoryStream, cancellationToken);
+        }
+        catch (FileNotFoundException)
+        {
+            await memoryStream.DisposeAsync();
+            logger.LogWarning(
+                "Document {DocId} not found for user {UserId}", id, userId);
+            return NotFound($"Document '{id}' was not found.");
+        }
+        catch
+        {
+            await memoryStream.DisposeAsync();
+            throw;
+        }
+
+        memoryStream.Position = 0;
+        return File(memoryStream, "application/octet-stream", fileName);
+    }
+
+    // -----------------------------------------------------------------
+    // Private helpers
+    // -----------------------------------------------------------------
+
+    private string GetUserId() =>
+        User.FindFirst("oid")?.Value
+        ?? User.FindFirst("sub")?.Value
+        ?? User.Identity?.Name
+        ?? "default";
 }

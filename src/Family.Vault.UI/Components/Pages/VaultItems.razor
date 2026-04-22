@@ -1,12 +1,15 @@
-@page "/"
+@page "/documents"
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject IVaultApiClient VaultApiClient
 @inject ILogger<VaultItems> Logger
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
 
 <PageTitle>My Documents – Family Vault</PageTitle>
 
 <h1>My Documents</h1>
+<p class="vault-page-subtitle">All documents stored in your Family Vault, organised by category.</p>
 
 @if (_isLoading)
 {
@@ -17,7 +20,7 @@ else if (_error is not null)
     <StatusMessage Type="StatusType.Error" Message="@_error" />
     <button class="vault-btn vault-btn--secondary" @onclick="LoadItemsAsync">Retry</button>
 }
-else if (_items.Count == 0)
+else if (_documents.Count == 0)
 {
     <p class="vault-empty">
         No documents uploaded yet.
@@ -26,28 +29,53 @@ else if (_items.Count == 0)
 }
 else
 {
-    <p class="vault-count">@_items.Count document(s) stored</p>
-    <table class="vault-table" aria-label="Stored documents">
-        <thead>
-            <tr>
-                <th scope="col">File Name</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in _items)
-            {
+    <p class="vault-count">@_documents.Count document(s) stored</p>
+
+    @if (_downloadError is not null)
+    {
+        <StatusMessage Type="StatusType.Error" Message="@_downloadError" />
+    }
+
+    <div class="vault-table-wrapper">
+        <table class="vault-table" aria-label="Stored documents">
+            <thead>
                 <tr>
-                    <td>@item.FileName</td>
+                    <th scope="col">File Name</th>
+                    <th scope="col">Category</th>
+                    <th scope="col" class="vault-col--right">Size</th>
+                    <th scope="col">Uploaded</th>
+                    <th scope="col">Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var doc in _documents)
+                {
+                    <tr>
+                        <td><strong>@doc.FileName</strong></td>
+                        <td><span class="vault-doc-category vault-doc-category--@doc.Category.ToLowerInvariant()">@doc.Category</span></td>
+                        <td class="vault-col--right vault-muted">@FormatSize(doc.FileSizeBytes)</td>
+                        <td class="vault-muted">@doc.UploadedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                        <td class="vault-actions-cell">
+                            <button class="vault-btn vault-btn--secondary vault-btn--sm"
+                                    @onclick="() => DownloadAsync(doc)"
+                                    disabled="@(_downloadingId == doc.Id)"
+                                    aria-busy="@(_downloadingId == doc.Id)">
+                                @(_downloadingId == doc.Id ? "Downloading…" : "⬇ Download")
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {
-    private IReadOnlyList<VaultFileItem> _items = [];
+    private List<DocumentMetadataModel> _documents = [];
     private bool _isLoading = true;
     private string? _error;
+    private string? _downloadError;
+    private Guid? _downloadingId;
 
     protected override async Task OnInitializedAsync() => await LoadItemsAsync();
 
@@ -58,16 +86,61 @@ else
 
         try
         {
-            _items = await VaultApiClient.GetVaultItemsAsync();
+            var items = await VaultApiClient.GetDocumentsAsync();
+            _documents = [.. items];
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to load vault items");
+            Logger.LogError(ex, "Failed to load documents");
             _error = "Failed to load documents. Please try again later.";
         }
         finally
         {
             _isLoading = false;
         }
+    }
+
+    private async Task DownloadAsync(DocumentMetadataModel doc)
+    {
+        _downloadError = null;
+        _downloadingId = doc.Id;
+
+        try
+        {
+            var (bytes, fileName) = await VaultApiClient.DownloadDocumentAsync(doc.Id, doc.FileName);
+            var mimeType = GuessMimeType(fileName);
+            var base64 = Convert.ToBase64String(bytes);
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, mimeType, base64);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Download failed for document {DocId}", doc.Id);
+            _downloadError = $"Download failed: {ex.Message}";
+        }
+        finally
+        {
+            _downloadingId = null;
+        }
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1_024 => $"{bytes} B",
+        < 1_048_576 => $"{bytes / 1_024.0:F1} KB",
+        _ => $"{bytes / 1_048_576.0:F1} MB"
+    };
+
+    private static string GuessMimeType(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf"  => "application/pdf",
+            ".png"  => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".txt"  => "text/plain",
+            _       => "application/octet-stream"
+        };
     }
 }

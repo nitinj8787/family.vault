@@ -1,21 +1,26 @@
+using System.Collections.Concurrent;
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Configuration;
 using Family.Vault.Application.Exceptions;
 using Family.Vault.Application.Models;
 using Family.Vault.Application.Utilities;
+using Family.Vault.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Family.Vault.Application.Services;
 
 /// <summary>
-/// Application-layer service that validates, categorises, and stores family documents.
+/// Application-layer service that validates, categorises, stores family documents, and
+/// maintains an in-memory metadata registry so documents can be listed and downloaded.
 /// </summary>
 /// <remarks>
 /// Validation rules (max size, allowed extensions) are driven by <see cref="DocumentOptions"/>
 /// so they can be adjusted per environment without code changes.
 /// Documents are stored under a category-based prefix (e.g. <c>uk/passport.pdf</c>) to
 /// keep the blob container organised.
+/// The metadata dictionary is an in-memory stand-in for a persistent database.
+/// Replace with a scoped, DB-backed store for production use.
 /// </remarks>
 public sealed class DocumentService(
     IStorageService storageService,
@@ -24,8 +29,13 @@ public sealed class DocumentService(
 {
     private readonly DocumentOptions _options = options.Value;
 
+    // In-memory metadata store keyed by (userId, documentId).
+    private readonly ConcurrentDictionary<(string UserId, Guid DocId), DocumentMetadata> _metadataStore =
+        new ConcurrentDictionary<(string UserId, Guid DocId), DocumentMetadata>();
+
     /// <inheritdoc/>
     public async Task<DocumentUploadResponse> UploadAsync(
+        string userId,
         DocumentUploadRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -36,8 +46,9 @@ public sealed class DocumentService(
         var storagePath = $"{categoryPrefix}/{request.FileName}";
 
         logger.LogInformation(
-            "Uploading document {FileName} (category={Category}, size={FileSizeBytes} bytes) to path {StoragePath}",
+            "Uploading document {FileName} (userId={UserId}, category={Category}, size={FileSizeBytes} bytes) to path {StoragePath}",
             LogSanitizer.Sanitize(request.FileName),
+            userId,
             request.Category,
             request.FileSizeBytes,
             LogSanitizer.Sanitize(storagePath));
@@ -46,9 +57,23 @@ public sealed class DocumentService(
 
         var uploadedAt = DateTimeOffset.UtcNow;
 
+        // Persist metadata so the document appears in listings and can be downloaded by ID.
+        var id = Guid.NewGuid();
+        var metadata = new DocumentMetadata(
+            id,
+            userId,
+            request.FileName,
+            request.Category.ToString(),
+            request.FileSizeBytes,
+            storagePath,
+            uploadedAt);
+
+        _metadataStore[(userId, id)] = metadata;
+
         logger.LogInformation(
-            "Document {FileName} successfully uploaded to {StoragePath} at {UploadedAtUtc}",
+            "Document {FileName} (id={DocId}) successfully uploaded to {StoragePath} at {UploadedAtUtc}",
             LogSanitizer.Sanitize(request.FileName),
+            id,
             LogSanitizer.Sanitize(storagePath),
             uploadedAt);
 
@@ -58,6 +83,42 @@ public sealed class DocumentService(
             FileSizeBytes: request.FileSizeBytes,
             StoragePath: storagePath,
             UploadedAtUtc: uploadedAt);
+    }
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<DocumentMetadataResponse>> GetAllAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        var docs = _metadataStore.Values
+            .Where(m => m.UserId == userId)
+            .OrderByDescending(m => m.UploadedAtUtc)
+            .Select(MapToResponse)
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<DocumentMetadataResponse>>(docs);
+    }
+
+    /// <inheritdoc/>
+    public async Task<string> DownloadAsync(
+        string userId,
+        Guid id,
+        Stream destination,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_metadataStore.TryGetValue((userId, id), out var metadata))
+        {
+            logger.LogWarning(
+                "Download requested for non-existent document {DocId} for user {UserId}", id, userId);
+            throw new FileNotFoundException($"Document '{id}' was not found.");
+        }
+
+        logger.LogInformation(
+            "Downloading document {DocId} ({FileName}) from {StoragePath} for user {UserId}",
+            id, LogSanitizer.Sanitize(metadata.FileName), LogSanitizer.Sanitize(metadata.StoragePath), userId);
+
+        await storageService.DownloadAsync(metadata.StoragePath, destination, cancellationToken);
+        return metadata.FileName;
     }
 
     // -----------------------------------------------------------------
@@ -100,4 +161,13 @@ public sealed class DocumentService(
                 $"File extension '{extension}' is not permitted. Allowed extensions: {string.Join(", ", _options.AllowedExtensions)}.");
         }
     }
+
+    private static DocumentMetadataResponse MapToResponse(DocumentMetadata m) =>
+        new(
+            Id: m.Id,
+            FileName: m.FileName,
+            Category: m.Category,
+            FileSizeBytes: m.FileSizeBytes,
+            StoragePath: m.StoragePath,
+            UploadedAtUtc: m.UploadedAtUtc);
 }

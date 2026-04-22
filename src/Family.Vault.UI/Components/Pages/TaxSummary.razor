@@ -1,0 +1,424 @@
+@page "/tax-summary"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject ITaxApiClient TaxApiClient
+@inject ILogger<TaxSummary> Logger
+
+<PageTitle>Tax Summary – Family Vault</PageTitle>
+
+<h1>Tax Summary</h1>
+<p class="vault-page-subtitle">Track income sources, tax paid, and UK declaration status across all countries.</p>
+
+@if (_isLoading)
+{
+    <p class="vault-loading" role="status">Loading tax entries…</p>
+}
+else
+{
+    @* ── Undeclared-income warning banner ── *@
+    @if (_undeclaredCount > 0)
+    {
+        <div class="vault-tax-warning" role="alert">
+            <span class="vault-tax-warning__icon" aria-hidden="true">⚠️</span>
+            <div>
+                <strong>Undeclared foreign income detected</strong>
+                <p class="vault-tax-warning__detail">
+                    @_undeclaredCount income
+                    @(_undeclaredCount == 1 ? "entry" : "entries")
+                    from outside the UK
+                    @(_undeclaredCount == 1 ? "has" : "have") not been declared in the UK.
+                    You may need to report this on a Self Assessment return.
+                </p>
+            </div>
+        </div>
+    }
+
+    @* ── Toolbar ── *@
+    <div class="vault-assets-toolbar">
+        <button class="vault-btn vault-btn--primary" @onclick="OpenAddDialog">
+            + Add Entry
+        </button>
+    </div>
+
+    @* ── Status message ── *@
+    @if (_statusMessage is not null)
+    {
+        <StatusMessage Type="@_statusType" Message="@_statusMessage" />
+    }
+
+    @if (_entries.Count == 0)
+    {
+        <p class="vault-empty">No entries recorded yet. Click <strong>+ Add Entry</strong> to get started.</p>
+    }
+    else
+    {
+        @* ── Legend ── *@
+        <div class="vault-tax-legend">
+            <span class="vault-tax-badge vault-tax-badge--undeclared">⚠️ Undeclared foreign income</span>
+            <span class="vault-tax-badge vault-tax-badge--declared">✅ Declared in UK</span>
+            <span class="vault-tax-badge vault-tax-badge--domestic">🇬🇧 UK income</span>
+        </div>
+
+        <div class="vault-table-wrapper">
+            <table class="vault-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Status</th>
+                        <th scope="col">Income Type</th>
+                        <th scope="col">Country</th>
+                        <th scope="col" class="vault-col--right">Tax Paid</th>
+                        <th scope="col">Declared in UK</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in _entries)
+                    {
+                        var isDomestic = IsDomesticUk(entry.Country);
+                        var rowClass = GetRowClass(entry);
+
+                        <tr class="@rowClass">
+                            <td class="vault-tax-status-cell">
+                                @if (isDomestic)
+                                {
+                                    <span class="vault-tax-indicator vault-tax-indicator--domestic"
+                                          title="UK income – no foreign declaration needed">
+                                        🇬🇧
+                                    </span>
+                                }
+                                else if (entry.DeclaredInUk)
+                                {
+                                    <span class="vault-tax-indicator vault-tax-indicator--ok"
+                                          title="Foreign income declared in UK">
+                                        ✅
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="vault-tax-indicator vault-tax-indicator--warn"
+                                          title="Foreign income NOT declared in UK">
+                                        ⚠️
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="vault-tax-income-type">@entry.IncomeType</span>
+                            </td>
+                            <td>@entry.Country</td>
+                            <td class="vault-col--right vault-tax-amount">
+                                @entry.TaxPaid.ToString("N2")
+                            </td>
+                            <td>
+                                @if (isDomestic)
+                                {
+                                    <span class="vault-muted">N/A</span>
+                                }
+                                else if (entry.DeclaredInUk)
+                                {
+                                    <span class="vault-tax-declared vault-tax-declared--yes">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="vault-tax-declared vault-tax-declared--no">No</span>
+                                }
+                            </td>
+                            <td class="vault-actions-cell">
+                                <button class="vault-btn vault-btn--secondary vault-btn--sm"
+                                        @onclick="() => OpenEditDialog(entry)">
+                                    Edit
+                                </button>
+                                <button class="vault-btn vault-btn--danger vault-btn--sm"
+                                        @onclick="() => OpenDeleteConfirm(entry)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="vault-tax-total-row">
+                        <td colspan="3"><strong>Total Tax Paid</strong></td>
+                        <td class="vault-col--right"><strong>@TotalTaxPaid.ToString("N2")</strong></td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+}
+
+@* ── Add / Edit Modal ── *@
+@if (_showDialog)
+{
+    <div class="vault-modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="tax-dialog-title">
+        <div class="vault-modal">
+            <div class="vault-modal__header">
+                <h2 id="tax-dialog-title" class="vault-modal__title">
+                    @(_editModel.IsNew ? "Add Tax Entry" : "Edit Tax Entry")
+                </h2>
+                <button class="vault-modal__close" @onclick="CloseDialog" aria-label="Close">✕</button>
+            </div>
+
+            <EditForm Model="_editModel" OnValidSubmit="SaveEntryAsync">
+                <DataAnnotationsValidator />
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="taxIncomeType">
+                        Income Type <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputSelect id="taxIncomeType" class="vault-select" @bind-Value="_editModel.IncomeType">
+                        <option value="">— Select income type —</option>
+                        @foreach (var t in AllIncomeTypes)
+                        {
+                            <option value="@t">@FormatIncomeType(t)</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _editModel.IncomeType)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="taxCountry">
+                        Country <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="taxCountry" class="vault-input" @bind-Value="_editModel.Country"
+                               placeholder="e.g. India, United Kingdom" />
+                    <ValidationMessage For="@(() => _editModel.Country)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="taxPaid">
+                        Tax Paid <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputNumber id="taxPaid" class="vault-input" @bind-Value="_editModel.TaxPaid"
+                                 placeholder="0.00" />
+                    <ValidationMessage For="@(() => _editModel.TaxPaid)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field vault-form-field--checkbox">
+                    <InputCheckbox id="taxDeclaredInUk" @bind-Value="_editModel.DeclaredInUk" />
+                    <label class="vault-label vault-label--inline" for="taxDeclaredInUk">
+                        Declared in UK Self Assessment
+                    </label>
+                </div>
+
+                <div class="vault-modal__footer">
+                    <button type="button" class="vault-btn vault-btn--secondary"
+                            @onclick="CloseDialog">
+                        Cancel
+                    </button>
+                    <button type="submit" class="vault-btn vault-btn--primary"
+                            disabled="@_isSaving" aria-busy="@_isSaving">
+                        @(_isSaving ? "Saving…" : "Save")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ── Delete confirmation Modal ── *@
+@if (_deleteTarget is not null)
+{
+    <div class="vault-modal-overlay" role="alertdialog" aria-modal="true"
+         aria-labelledby="tax-delete-title">
+        <div class="vault-modal vault-modal--narrow">
+            <div class="vault-modal__header">
+                <h2 id="tax-delete-title" class="vault-modal__title">Delete Entry</h2>
+            </div>
+            <p>
+                Are you sure you want to delete the
+                <strong>@FormatIncomeType(_deleteTarget.IncomeType)</strong> entry for
+                <strong>@_deleteTarget.Country</strong>?
+                This action cannot be undone.
+            </p>
+            <div class="vault-modal__footer">
+                <button class="vault-btn vault-btn--secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="vault-btn vault-btn--danger" @onclick="ConfirmDeleteAsync"
+                        disabled="@_isSaving" aria-busy="@_isSaving">
+                    @(_isSaving ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Must stay in sync with the IncomeType enum values serialised by the API.
+    private static readonly string[] AllIncomeTypes =
+        ["Salary", "Rental", "Dividend", "Pension", "FreelanceOrSelfEmployed", "CapitalGains", "Other"];
+
+    private static readonly HashSet<string> UkCountryNames =
+        new(StringComparer.OrdinalIgnoreCase) { "United Kingdom", "UK", "England", "Scotland", "Wales", "Northern Ireland" };
+
+    private List<TaxDisplayModel> _entries = [];
+    private bool _isLoading = true;
+    private bool _isSaving;
+
+    private string? _statusMessage;
+    private StatusType _statusType = StatusType.Info;
+
+    private bool _showDialog;
+    private TaxFormModel _editModel = new();
+    private TaxDisplayModel? _deleteTarget;
+
+    private int _undeclaredCount;
+    private decimal TotalTaxPaid => _entries.Sum(e => e.TaxPaid);
+
+    protected override async Task OnInitializedAsync() => await LoadEntriesAsync();
+
+    private async Task LoadEntriesAsync()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var items = await TaxApiClient.GetAllAsync();
+            _entries = [.. items];
+            RefreshWarnings();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load tax entries");
+            _statusMessage = "Could not load tax entries. Please try again.";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // ── Warning logic ────────────────────────────────────────────────────
+
+    private void RefreshWarnings()
+    {
+        _undeclaredCount = _entries.Count(e =>
+            !IsDomesticUk(e.Country) && !e.DeclaredInUk);
+    }
+
+    private static bool IsDomesticUk(string country) =>
+        UkCountryNames.Contains(country);
+
+    private static string GetRowClass(TaxDisplayModel entry)
+    {
+        if (IsDomesticUk(entry.Country)) return string.Empty;
+        return entry.DeclaredInUk ? "vault-tax-row--ok" : "vault-tax-row--warn";
+    }
+
+    // ── Dialog helpers ────────────────────────────────────────────────────
+
+    private void OpenAddDialog()
+    {
+        _editModel = new TaxFormModel();
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void OpenEditDialog(TaxDisplayModel entry)
+    {
+        _editModel = new TaxFormModel
+        {
+            Id = entry.Id,
+            IncomeType = entry.IncomeType,
+            Country = entry.Country,
+            TaxPaid = entry.TaxPaid,
+            DeclaredInUk = entry.DeclaredInUk
+        };
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+        _editModel = new TaxFormModel();
+    }
+
+    // ── Save ─────────────────────────────────────────────────────────────
+
+    private async Task SaveEntryAsync()
+    {
+        _isSaving = true;
+        _statusMessage = null;
+
+        try
+        {
+            TaxDisplayModel saved;
+
+            if (_editModel.IsNew)
+            {
+                saved = await TaxApiClient.AddAsync(_editModel);
+                _entries.Add(saved);
+                _statusMessage = $"{FormatIncomeType(saved.IncomeType)} entry for {saved.Country} added.";
+            }
+            else
+            {
+                saved = await TaxApiClient.UpdateAsync(_editModel);
+                var idx = _entries.FindIndex(e => e.Id == saved.Id);
+                if (idx >= 0) _entries[idx] = saved;
+                _statusMessage = $"{FormatIncomeType(saved.IncomeType)} entry updated.";
+            }
+
+            RefreshWarnings();
+            _statusType = StatusType.Success;
+            _showDialog = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save tax entry");
+            _statusMessage = $"Save failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────
+
+    private void OpenDeleteConfirm(TaxDisplayModel entry)
+    {
+        _deleteTarget = entry;
+        _statusMessage = null;
+    }
+
+    private void CancelDelete() => _deleteTarget = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget is null) return;
+
+        _isSaving = true;
+
+        try
+        {
+            await TaxApiClient.DeleteAsync(_deleteTarget.Id);
+            _entries.RemoveAll(e => e.Id == _deleteTarget.Id);
+            _statusMessage = $"{FormatIncomeType(_deleteTarget.IncomeType)} entry deleted.";
+            _statusType = StatusType.Success;
+            _deleteTarget = null;
+            RefreshWarnings();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete tax entry {EntryId}", _deleteTarget?.Id);
+            _statusMessage = $"Delete failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Formatting helpers ─────────────────────────────────────────────
+
+    private static string FormatIncomeType(string raw) => raw switch
+    {
+        "FreelanceOrSelfEmployed" => "Freelance / Self-Employed",
+        "CapitalGains" => "Capital Gains",
+        _ => raw
+    };
+}

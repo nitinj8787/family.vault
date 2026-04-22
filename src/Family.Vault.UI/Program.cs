@@ -109,6 +109,54 @@ builder.Services.AddHttpClient<IInvestmentsApiClient, InvestmentsApiClient>(clie
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Typed HttpClient for the Insurance API — shares the same base address.
+builder.Services.AddHttpClient<IInsuranceApiClient, InsuranceApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+// Typed HttpClient for the Properties API — shares the same base address.
+builder.Services.AddHttpClient<IPropertyApiClient, PropertyApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+// Typed HttpClient for the Emergency Fund API — shares the same base address.
+builder.Services.AddHttpClient<IEmergencyFundApiClient, EmergencyFundApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+// Typed HttpClient for the Nominees API — shares the same base address.
+builder.Services.AddHttpClient<INomineeApiClient, NomineeApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+// Typed HttpClient for the Tax API — shares the same base address.
+builder.Services.AddHttpClient<ITaxApiClient, TaxApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+// Typed HttpClient for the Wills & Legal API — shares the same base address.
+builder.Services.AddHttpClient<IWillsApiClient, WillsApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

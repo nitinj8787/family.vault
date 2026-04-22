@@ -1,0 +1,383 @@
+@page "/emergency-fund"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IEmergencyFundApiClient EmergencyFundApiClient
+@inject ILogger<EmergencyFund> Logger
+
+<PageTitle>Emergency Fund – Family Vault</PageTitle>
+
+<h1>Emergency Fund</h1>
+<p class="vault-page-subtitle">Keep track of where your emergency cash is held and how to access it.</p>
+
+@if (_isLoading)
+{
+    <p class="vault-loading" role="status">Loading emergency fund…</p>
+}
+else
+{
+    @* ── Summary banner ── *@
+    <div class="vault-ef-summary">
+        <div class="vault-ef-summary__total">
+            <span class="vault-ef-summary__label">Total Emergency Fund</span>
+            <span class="vault-ef-summary__amount">@FormatAmount(TotalAmount)</span>
+        </div>
+
+        @if (_monthlyExpenses.HasValue && _monthlyExpenses.Value > 0)
+        {
+            var months = TotalAmount / _monthlyExpenses.Value;
+            var coverClass = months >= 6 ? "good" : months >= 3 ? "warn" : "low";
+            <div class="vault-ef-summary__coverage vault-ef-summary__coverage--@coverClass">
+                <span class="vault-ef-summary__cov-icon">@(months >= 6 ? "✅" : months >= 3 ? "⚠️" : "🔴")</span>
+                <span>@months.ToString("F1") months of expenses covered</span>
+            </div>
+        }
+        else
+        {
+            <div class="vault-ef-summary__hint">
+                <label class="vault-label" for="monthlyExpenses">
+                    Monthly expenses (optional – for coverage estimate):
+                </label>
+                <div class="vault-ef-expenses-input">
+                    <input id="monthlyExpenses" type="number" min="0" step="0.01"
+                           class="vault-input vault-input--sm"
+                           placeholder="e.g. 2500"
+                           @bind="_monthlyExpensesInput"
+                           @bind:event="oninput"
+                           @bind:after="ApplyMonthlyExpenses" />
+                </div>
+            </div>
+        }
+
+        @if (_monthlyExpenses.HasValue)
+        {
+            <button class="vault-btn vault-btn--ghost vault-btn--sm"
+                    @onclick="ClearMonthlyExpenses">
+                Clear comparison
+            </button>
+        }
+    </div>
+
+    @* ── Toolbar ── *@
+    <div class="vault-assets-toolbar">
+        <button class="vault-btn vault-btn--primary" @onclick="OpenAddDialog">
+            + Add Fund Entry
+        </button>
+    </div>
+
+    @* ── Status message ── *@
+    @if (_statusMessage is not null)
+    {
+        <StatusMessage Type="@_statusType" Message="@_statusMessage" />
+    }
+
+    @if (_entries.Count == 0)
+    {
+        <p class="vault-empty">No entries recorded yet. Click <strong>+ Add Fund Entry</strong> to get started.</p>
+    }
+    else
+    {
+        <div class="vault-table-wrapper">
+            <table class="vault-table">
+                <thead>
+                    <tr>
+                        <th>Location (Bank / Account)</th>
+                        <th class="vault-col--right">Amount</th>
+                        <th>Access Instructions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in _entries)
+                    {
+                        <tr>
+                            <td><strong>@entry.Location</strong></td>
+                            <td class="vault-col--right vault-ef-amount">@FormatAmount(entry.Amount)</td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(entry.AccessInstructions))
+                                {
+                                    <span class="vault-muted">—</span>
+                                }
+                                else
+                                {
+                                    <span class="vault-ef-instructions" title="@entry.AccessInstructions">
+                                        @entry.AccessInstructions
+                                    </span>
+                                }
+                            </td>
+                            <td class="vault-actions-cell">
+                                <button class="vault-btn vault-btn--secondary vault-btn--sm"
+                                        @onclick="() => OpenEditDialog(entry)">
+                                    Edit
+                                </button>
+                                <button class="vault-btn vault-btn--danger vault-btn--sm"
+                                        @onclick="() => OpenDeleteConfirm(entry)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="vault-ef-total-row">
+                        <td><strong>Total</strong></td>
+                        <td class="vault-col--right"><strong>@FormatAmount(TotalAmount)</strong></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+}
+
+@* ── Add / Edit Modal ── *@
+@if (_showDialog)
+{
+    <div class="vault-modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="ef-dialog-title">
+        <div class="vault-modal">
+            <div class="vault-modal__header">
+                <h2 id="ef-dialog-title" class="vault-modal__title">
+                    @(_editModel.IsNew ? "Add Fund Entry" : "Edit Fund Entry")
+                </h2>
+                <button class="vault-modal__close" @onclick="CloseDialog" aria-label="Close">✕</button>
+            </div>
+
+            <EditForm Model="_editModel" OnValidSubmit="SaveEntryAsync">
+                <DataAnnotationsValidator />
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="efLocation">
+                        Location (Bank / Account) <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="efLocation" class="vault-input" @bind-Value="_editModel.Location"
+                               placeholder="e.g. Barclays Current Account" />
+                    <ValidationMessage For="@(() => _editModel.Location)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="efAmount">
+                        Amount <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputNumber id="efAmount" class="vault-input" @bind-Value="_editModel.Amount"
+                                 placeholder="0.00" />
+                    <ValidationMessage For="@(() => _editModel.Amount)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="efAccess">Access Instructions</label>
+                    <InputTextArea id="efAccess" class="vault-input vault-textarea"
+                                   @bind-Value="_editModel.AccessInstructions"
+                                   placeholder="e.g. Online banking – savings app, sort code 12-34-56, account 87654321" />
+                    <ValidationMessage For="@(() => _editModel.AccessInstructions)" class="vault-validation" />
+                </div>
+
+                <div class="vault-modal__footer">
+                    <button type="button" class="vault-btn vault-btn--secondary"
+                            @onclick="CloseDialog">
+                        Cancel
+                    </button>
+                    <button type="submit" class="vault-btn vault-btn--primary"
+                            disabled="@_isSaving" aria-busy="@_isSaving">
+                        @(_isSaving ? "Saving…" : "Save")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ── Delete confirmation Modal ── *@
+@if (_deleteTarget is not null)
+{
+    <div class="vault-modal-overlay" role="alertdialog" aria-modal="true"
+         aria-labelledby="ef-delete-title">
+        <div class="vault-modal vault-modal--narrow">
+            <div class="vault-modal__header">
+                <h2 id="ef-delete-title" class="vault-modal__title">Delete Entry</h2>
+            </div>
+            <p>
+                Are you sure you want to delete
+                <strong>@_deleteTarget.Location</strong> (@FormatAmount(_deleteTarget.Amount))?
+                This action cannot be undone.
+            </p>
+            <div class="vault-modal__footer">
+                <button class="vault-btn vault-btn--secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="vault-btn vault-btn--danger" @onclick="ConfirmDeleteAsync"
+                        disabled="@_isSaving" aria-busy="@_isSaving">
+                    @(_isSaving ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<EmergencyFundDisplayModel> _entries = [];
+    private bool _isLoading = true;
+    private bool _isSaving;
+
+    private string? _statusMessage;
+    private StatusType _statusType = StatusType.Info;
+
+    private bool _showDialog;
+    private EmergencyFundFormModel _editModel = new();
+    private EmergencyFundDisplayModel? _deleteTarget;
+
+    // Monthly-expenses comparison (not persisted, client-side only)
+    private decimal? _monthlyExpenses;
+    private string _monthlyExpensesInput = string.Empty;
+
+    private decimal TotalAmount => _entries.Sum(e => e.Amount);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntriesAsync();
+    }
+
+    private async Task LoadEntriesAsync()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var items = await EmergencyFundApiClient.GetAllAsync();
+            _entries = [.. items];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load emergency fund entries");
+            _statusMessage = "Could not load emergency fund entries. Please try again.";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // ── Monthly expenses comparison ────────────────────────────────────
+
+    private void ApplyMonthlyExpenses()
+    {
+        if (decimal.TryParse(_monthlyExpensesInput, out var val) && val > 0)
+            _monthlyExpenses = val;
+        else
+            _monthlyExpenses = null;
+    }
+
+    private void ClearMonthlyExpenses()
+    {
+        _monthlyExpenses = null;
+        _monthlyExpensesInput = string.Empty;
+    }
+
+    // ── Dialog helpers ──────────────────────────────────────────────────
+
+    private void OpenAddDialog()
+    {
+        _editModel = new EmergencyFundFormModel();
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void OpenEditDialog(EmergencyFundDisplayModel entry)
+    {
+        _editModel = new EmergencyFundFormModel
+        {
+            Id = entry.Id,
+            Location = entry.Location,
+            Amount = entry.Amount,
+            AccessInstructions = entry.AccessInstructions
+        };
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+        _editModel = new EmergencyFundFormModel();
+    }
+
+    // ── Save ────────────────────────────────────────────────────────────
+
+    private async Task SaveEntryAsync()
+    {
+        _isSaving = true;
+        _statusMessage = null;
+
+        try
+        {
+            EmergencyFundDisplayModel saved;
+
+            if (_editModel.IsNew)
+            {
+                saved = await EmergencyFundApiClient.AddAsync(_editModel);
+                _entries.Add(saved);
+                _statusMessage = $"{saved.Location} added successfully.";
+            }
+            else
+            {
+                saved = await EmergencyFundApiClient.UpdateAsync(_editModel);
+                var idx = _entries.FindIndex(e => e.Id == saved.Id);
+                if (idx >= 0) _entries[idx] = saved;
+                _statusMessage = $"{saved.Location} updated successfully.";
+            }
+
+            _statusType = StatusType.Success;
+            _showDialog = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save emergency fund entry");
+            _statusMessage = $"Save failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Delete ──────────────────────────────────────────────────────────
+
+    private void OpenDeleteConfirm(EmergencyFundDisplayModel entry)
+    {
+        _deleteTarget = entry;
+        _statusMessage = null;
+    }
+
+    private void CancelDelete() => _deleteTarget = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget is null) return;
+
+        _isSaving = true;
+
+        try
+        {
+            await EmergencyFundApiClient.DeleteAsync(_deleteTarget.Id);
+            _entries.RemoveAll(e => e.Id == _deleteTarget.Id);
+            _statusMessage = $"{_deleteTarget.Location} deleted.";
+            _statusType = StatusType.Success;
+            _deleteTarget = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete emergency fund entry {EntryId}", _deleteTarget?.Id);
+            _statusMessage = $"Delete failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────
+
+    private static string FormatAmount(decimal amount) =>
+        amount.ToString("N2");
+}

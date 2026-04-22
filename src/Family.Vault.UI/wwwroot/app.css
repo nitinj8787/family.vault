@@ -775,3 +775,825 @@ a:hover {
     font-weight: 400;
     color: var(--color-muted, #64748b);
 }
+
+/* ---------------------------------------------------------
+   Insurance – policy cards
+   --------------------------------------------------------- */
+.vault-insurance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1rem;
+}
+
+.vault-insurance-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.vault-insurance-card--missing-nominee {
+    border-color: #f59e0b;
+    background-color: #fffbeb;
+}
+
+.vault-insurance-card__header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.vault-insurance-card__title {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.vault-badge--insurance {
+    background-color: #eef2ff;
+    color: #4338ca;
+    text-transform: none;
+}
+
+.vault-insurance-warning {
+    font-size: 0.8rem;
+    color: #92400e;
+    background-color: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.5rem;
+}
+
+.vault-insurance-meta {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+}
+
+.vault-insurance-meta dt {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.vault-insurance-meta dd {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------
+   Property & Loans – country tags, liability row, group headings
+   --------------------------------------------------------- */
+.vault-prop-group {
+    margin-bottom: 2rem;
+}
+
+.vault-prop-group__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+
+.vault-prop-group__count {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--color-muted);
+}
+
+.vault-badge--prop-country-uk {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--prop-country-india {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+/* Liability badge shown inline next to asset name */
+.vault-badge--liability {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    margin-left: 0.5rem;
+    font-size: 0.7rem;
+}
+
+/* Row highlight for assets with a loan linked */
+.vault-row--liability {
+    background-color: #fef9f0;
+}
+
+.vault-row--liability:hover {
+    background-color: #fef0d9;
+}
+
+/* Truncate long documents-location text in the table */
+.vault-doc-location {
+    display: inline-block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.vault-muted {
+    color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------
+   Emergency Fund – summary banner and table
+   --------------------------------------------------------- */
+.vault-ef-summary {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.vault-ef-summary__total {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.vault-ef-summary__label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+}
+
+.vault-ef-summary__amount {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--color-primary, #2563eb);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Coverage indicator */
+.vault-ef-summary__coverage {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+}
+
+.vault-ef-summary__coverage--good {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.vault-ef-summary__coverage--warn {
+    background-color: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.vault-ef-summary__coverage--low {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.vault-ef-summary__hint {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+
+.vault-ef-expenses-input {
+    display: flex;
+    align-items: center;
+}
+
+/* Amount column — right-aligned with mono font */
+.vault-col--right {
+    text-align: right;
+}
+
+.vault-ef-amount {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+/* Instructions cell — soft truncation */
+.vault-ef-instructions {
+    display: inline-block;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    cursor: help;
+}
+
+/* Total row in table footer */
+.vault-ef-total-row {
+    background-color: var(--color-surface-alt, #f8fafc);
+    border-top: 2px solid var(--color-border);
+}
+
+/* Ghost button variant */
+.vault-btn--ghost {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-muted);
+}
+
+.vault-btn--ghost:hover {
+    background: var(--color-surface-alt, #f8fafc);
+}
+
+/* Small input variant */
+.vault-input--sm {
+    max-width: 160px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.9rem;
+}
+
+/* Textarea */
+.vault-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ---------------------------------------------------------
+   Document Vault – category badges
+   --------------------------------------------------------- */
+.vault-doc-category {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.vault-doc-category--uk {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.vault-doc-category--india {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.vault-doc-category--insurance {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+/* ---------------------------------------------------------
+   Nominee Manager
+   --------------------------------------------------------- */
+
+/* Missing-nominees warning banner */
+.vault-nominee-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background-color: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-left: 4px solid var(--color-warning);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.vault-nominee-warning__icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vault-nominee-warning__detail {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+/* All-clear confirmation */
+.vault-nominee-allclear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-md);
+    padding: 0.6rem 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--color-success);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Asset-type badge on the nominee table */
+.vault-nominee-type {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background-color: #ede9fe;
+    color: #5b21b6;
+}
+
+/* ---------------------------------------------------------
+   Tax Summary
+   --------------------------------------------------------- */
+
+/* Undeclared-income warning banner */
+.vault-tax-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background-color: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-left: 4px solid var(--color-warning);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.vault-tax-warning__icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vault-tax-warning__detail {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+/* Row highlights */
+.vault-tax-row--warn {
+    background-color: #fff7ed;
+}
+
+.vault-tax-row--ok {
+    background-color: #f0fdf4;
+}
+
+/* Status indicator cell */
+.vault-tax-status-cell {
+    text-align: center;
+    font-size: 1.1rem;
+    width: 2.5rem;
+}
+
+.vault-tax-indicator {
+    cursor: default;
+}
+
+/* Income type badge */
+.vault-tax-income-type {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+/* Tax-paid amount emphasis */
+.vault-tax-amount {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Declared/undeclared pill */
+.vault-tax-declared {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.vault-tax-declared--yes {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.vault-tax-declared--no {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Legend row above the table */
+.vault-tax-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.vault-tax-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-muted);
+}
+
+.vault-tax-badge--undeclared { border-color: #fed7aa; background-color: #fff7ed; color: #92400e; }
+.vault-tax-badge--declared   { border-color: #bbf7d0; background-color: #f0fdf4; color: #166534; }
+.vault-tax-badge--domestic   { border-color: #bfdbfe; background-color: #eff6ff; color: #1d4ed8; }
+
+/* Total row */
+.vault-tax-total-row td {
+    border-top: 2px solid var(--color-border);
+    padding-top: 0.6rem;
+}
+
+/* Checkbox field layout */
+.vault-form-field--checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vault-label--inline {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+/* ---------------------------------------------------------
+   Wills & Legal
+   --------------------------------------------------------- */
+
+/* CRITICAL missing-will banner */
+.vault-wills-critical {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background-color: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-left: 5px solid #dc2626;
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.vault-wills-critical__icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vault-wills-critical__detail {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+/* All-clear banner */
+.vault-wills-allclear {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 5px solid #16a34a;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #166534;
+    font-weight: 500;
+}
+
+/* Row highlights */
+.vault-wills-row--critical {
+    background-color: #fff1f2;
+}
+
+.vault-wills-row--ok {
+    background-color: #f0fdf4;
+}
+
+/* Status indicator cell */
+.vault-wills-status-cell {
+    text-align: center;
+    font-size: 1.1rem;
+    width: 2.5rem;
+}
+
+.vault-wills-indicator {
+    cursor: default;
+}
+
+/* Country label */
+.vault-wills-country {
+    font-weight: 600;
+}
+
+/* Yes/No pill */
+.vault-wills-pill {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.vault-wills-pill--yes {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.vault-wills-pill--no {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Hint text below inputs */
+.vault-hint {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    margin-top: 0.2rem;
+}
+
+/* ---------------------------------------------------------
+   Dashboard
+   --------------------------------------------------------- */
+
+/* Alert banners (CRITICAL / Warning) */
+.vault-dash-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.vault-dash-alert--critical {
+    background-color: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-left: 5px solid #dc2626;
+}
+
+.vault-dash-alert--warning {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+    border-left: 5px solid #d97706;
+}
+
+.vault-dash-alert__icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vault-dash-alert__detail {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
+.vault-dash-alert__detail a {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+/* Metric card grid */
+.vault-dash-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.vault-dash-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.vault-dash-card--ok {
+    border-left: 4px solid var(--color-success);
+}
+
+.vault-dash-card--warn {
+    border-left: 4px solid var(--color-warning);
+    background-color: #fffbeb;
+}
+
+.vault-dash-card--critical {
+    border-left: 4px solid var(--color-error);
+    background-color: #fff1f2;
+}
+
+.vault-dash-card--score {
+    border-left: 4px solid var(--color-accent);
+}
+
+.vault-dash-card__icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vault-dash-card__value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-text);
+}
+
+.vault-dash-card__label {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 0.2rem;
+}
+
+/* Score badge inside metric card */
+.vault-dash-score {
+    display: flex;
+    align-items: baseline;
+    gap: 0.15rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.vault-dash-score--good  { background-color: #dcfce7; color: #166534; }
+.vault-dash-score--warn  { background-color: #fef9c3; color: #854d0e; }
+.vault-dash-score--low   { background-color: #fee2e2; color: #991b1b; }
+
+.vault-dash-score__value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.vault-dash-score__max {
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+.vault-dash-score__desc {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    margin-top: 0.25rem;
+}
+
+/* Section overview heading */
+.vault-dash-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin: 0 0 1rem;
+}
+
+/* Section cards grid */
+.vault-dash-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+}
+
+.vault-dash-section-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.vault-dash-section-card--warn {
+    border-left: 4px solid var(--color-warning);
+    background-color: #fffbeb;
+}
+
+.vault-dash-section-card--critical {
+    border-left: 4px solid var(--color-error);
+    background-color: #fff1f2;
+}
+
+.vault-dash-section-card__header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.vault-dash-section-card__title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex: 1;
+}
+
+.vault-dash-section-card__count {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+}
+
+.vault-dash-section-card__issue {
+    font-size: 0.78rem;
+    color: #92400e;
+    margin: 0.35rem 0 0;
+}
+
+/* Score breakdown table */
+.vault-dash-score-breakdown {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.vault-dash-score-row {
+    display: grid;
+    grid-template-columns: 1.5rem 1fr 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.875rem;
+}
+
+.vault-dash-score-row:last-child {
+    border-bottom: none;
+}
+
+.vault-dash-score-row__icon {
+    font-size: 1rem;
+    text-align: center;
+}
+
+.vault-dash-score-row__label {
+    font-weight: 600;
+}
+
+.vault-dash-score-row__detail {
+    color: var(--color-muted);
+    font-size: 0.82rem;
+}
+
+.vault-dash-score-row__pts {
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.pts--full    { background-color: #dcfce7; color: #166534; }
+.pts--partial { background-color: #fef3c7; color: #92400e; }
