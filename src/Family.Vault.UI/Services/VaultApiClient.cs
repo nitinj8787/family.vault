@@ -95,6 +95,62 @@ public sealed class VaultApiClient(
         return result;
     }
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<DocumentMetadataModel>> GetDocumentsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Fetching document metadata list from API");
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/document");
+        await AttachAuthorizationAsync(request, cancellationToken);
+
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var docs = await response.Content.ReadFromJsonAsync<List<DocumentMetadataModel>>(
+            _jsonOptions, cancellationToken);
+
+        logger.LogInformation("Received {Count} document metadata records", docs?.Count ?? 0);
+        return docs ?? [];
+    }
+
+    /// <inheritdoc/>
+    public async Task<(byte[] Bytes, string FileName)> DownloadDocumentAsync(
+        Guid id,
+        string fileName,
+        CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Downloading document {DocId} ({FileName})", id, fileName);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"api/document/download/{id}");
+        await AttachAuthorizationAsync(request, cancellationToken);
+
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(
+                string.IsNullOrWhiteSpace(error)
+                    ? $"Download failed ({(int)response.StatusCode})."
+                    : error,
+                inner: null,
+                response.StatusCode);
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+        // Prefer the file name from the Content-Disposition header when available.
+        var resolvedName = response.Content.Headers.ContentDisposition?.FileNameStar
+            ?? response.Content.Headers.ContentDisposition?.FileName
+            ?? fileName;
+
+        logger.LogInformation(
+            "Document {DocId} downloaded ({Bytes} bytes)", id, bytes.Length);
+
+        return (bytes, resolvedName);
+    }
+
     // -----------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------

@@ -25,4 +25,19 @@ public interface IVaultApiClient
         Stream content,
         string category,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the rich metadata list for all documents belonging to the signed-in user.
+    /// </summary>
+    Task<IReadOnlyList<DocumentMetadataModel>> GetDocumentsAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Downloads the document identified by <paramref name="id"/> and returns its raw bytes
+    /// together with the original file name.
+    /// </summary>
+    Task<(byte[] Bytes, string FileName)> DownloadDocumentAsync(
+        Guid id,
+        string fileName,
+        CancellationToken cancellationToken = default);
 }

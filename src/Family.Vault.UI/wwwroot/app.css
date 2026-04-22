@@ -1044,4 +1044,31 @@ a:hover {
     min-height: 80px;
 }
 
+/* ---------------------------------------------------------
+   Document Vault – category badges
+   --------------------------------------------------------- */
+.vault-doc-category {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.vault-doc-category--uk {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.vault-doc-category--india {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.vault-doc-category--insurance {
+    background-color: #dcfce7;
+    color: #166534;
+}
 
