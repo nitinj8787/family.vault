@@ -69,6 +69,9 @@ builder.Services.AddSingleton<IUkAssetService, UkAssetService>();
 // Singleton so that in-memory India assets survive across requests.
 // Replace with a scoped, DB-backed implementation for production.
 builder.Services.AddSingleton<IIndiaAssetService, IndiaAssetService>();
+// Singleton so that in-memory bank accounts survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<IBankAccountService, BankAccountService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
