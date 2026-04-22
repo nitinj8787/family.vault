@@ -77,6 +77,14 @@ builder.Services.AddHttpClient<IProfileApiClient, ProfileApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Typed HttpClient for the UK Assets API — shares the same base address.
+builder.Services.AddHttpClient<IUkAssetsApiClient, UkAssetsApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

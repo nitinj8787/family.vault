@@ -1,0 +1,344 @@
+@page "/uk-assets"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IUkAssetsApiClient UkAssetsApiClient
+@inject ILogger<UkAssets> Logger
+
+<PageTitle>UK Assets – Family Vault</PageTitle>
+
+<h1>UK Assets</h1>
+
+@if (_isLoading)
+{
+    <p class="vault-loading" role="status">Loading assets…</p>
+}
+else
+{
+    @* ── Toolbar ── *@
+    <div class="vault-assets-toolbar">
+        <button class="vault-btn vault-btn--primary" @onclick="OpenAddDialog">
+            + Add Asset
+        </button>
+    </div>
+
+    @* ── Status message ── *@
+    @if (_statusMessage is not null)
+    {
+        <StatusMessage Type="@_statusType" Message="@_statusMessage" />
+    }
+
+    @* ── Table ── *@
+    @if (_assets.Count == 0)
+    {
+        <p class="vault-empty">No UK assets recorded yet. Click <strong>+ Add Asset</strong> to get started.</p>
+    }
+    else
+    {
+        <div class="vault-table-wrapper">
+            <table class="vault-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Provider</th>
+                        <th>Account Number</th>
+                        <th>Nominee</th>
+                        <th>Tax Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var asset in _assets)
+                    {
+                        <tr>
+                            <td>
+                                <span class="vault-badge vault-badge--@asset.Category.ToString().ToLowerInvariant()">
+                                    @CategoryLabel(asset.Category)
+                                </span>
+                            </td>
+                            <td>@asset.Provider</td>
+                            <td>
+                                <span class="vault-masked" title="Account number is masked for security">
+                                    @asset.MaskedAccountNumber
+                                </span>
+                            </td>
+                            <td>@(asset.Nominee ?? "—")</td>
+                            <td class="vault-tax-notes">@(asset.TaxNotes ?? "—")</td>
+                            <td class="vault-actions-cell">
+                                <button class="vault-btn vault-btn--secondary vault-btn--sm"
+                                        @onclick="() => OpenEditDialog(asset)">
+                                    Edit
+                                </button>
+                                <button class="vault-btn vault-btn--danger vault-btn--sm"
+                                        @onclick="() => OpenDeleteConfirm(asset)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@* ── Add / Edit Modal ── *@
+@if (_showDialog)
+{
+    <div class="vault-modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="dialog-title">
+        <div class="vault-modal">
+            <div class="vault-modal__header">
+                <h2 id="dialog-title" class="vault-modal__title">
+                    @(_editModel.IsNew ? "Add UK Asset" : "Edit UK Asset")
+                </h2>
+                <button class="vault-modal__close" @onclick="CloseDialog" aria-label="Close">✕</button>
+            </div>
+
+            <EditForm Model="_editModel" OnValidSubmit="SaveAssetAsync">
+                <DataAnnotationsValidator />
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="category">
+                        Category <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputSelect id="category" class="vault-select" @bind-Value="_editModel.Category">
+                        @foreach (var cat in Enum.GetValues<UkAssetCategory>())
+                        {
+                            <option value="@cat">@CategoryLabel(cat)</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _editModel.Category)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="provider">
+                        Provider <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="provider" class="vault-input" @bind-Value="_editModel.Provider"
+                               placeholder="e.g. Barclays, Vanguard, NHS Pension" />
+                    <ValidationMessage For="@(() => _editModel.Provider)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="accountNumber">
+                        Account Number <span class="vault-required" aria-hidden="true">*</span>
+                    </label>
+                    <InputText id="accountNumber" class="vault-input" @bind-Value="_editModel.AccountNumber"
+                               placeholder="Full account / reference number"
+                               autocomplete="off" />
+                    <p class="vault-file-info">This will be masked in the table view.</p>
+                    <ValidationMessage For="@(() => _editModel.AccountNumber)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="nominee">Nominee</label>
+                    <InputText id="nominee" class="vault-input" @bind-Value="_editModel.Nominee"
+                               placeholder="Nominated beneficiary name" />
+                    <ValidationMessage For="@(() => _editModel.Nominee)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="taxNotes">Tax Notes</label>
+                    <InputTextArea id="taxNotes" class="vault-input vault-textarea"
+                                   @bind-Value="_editModel.TaxNotes"
+                                   rows="3"
+                                   placeholder="e.g. ISA allowance used, inheritance tax notes…" />
+                    <ValidationMessage For="@(() => _editModel.TaxNotes)" class="vault-validation" />
+                </div>
+
+                <div class="vault-modal__footer">
+                    <button type="button" class="vault-btn vault-btn--secondary"
+                            @onclick="CloseDialog">
+                        Cancel
+                    </button>
+                    <button type="submit" class="vault-btn vault-btn--primary"
+                            disabled="@_isSaving" aria-busy="@_isSaving">
+                        @(_isSaving ? "Saving…" : "Save")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ── Delete confirmation Modal ── *@
+@if (_deleteTarget is not null)
+{
+    <div class="vault-modal-overlay" role="alertdialog" aria-modal="true"
+         aria-labelledby="delete-title">
+        <div class="vault-modal vault-modal--narrow">
+            <div class="vault-modal__header">
+                <h2 id="delete-title" class="vault-modal__title">Delete Asset</h2>
+            </div>
+            <p>
+                Are you sure you want to delete the <strong>@CategoryLabel(_deleteTarget.Category)</strong>
+                asset at <strong>@_deleteTarget.Provider</strong>?
+                This action cannot be undone.
+            </p>
+            <div class="vault-modal__footer">
+                <button class="vault-btn vault-btn--secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="vault-btn vault-btn--danger" @onclick="ConfirmDeleteAsync"
+                        disabled="@_isSaving" aria-busy="@_isSaving">
+                    @(_isSaving ? "Deleting…" : "Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UkAssetDisplayModel> _assets = [];
+    private bool _isLoading = true;
+    private bool _isSaving;
+
+    private string? _statusMessage;
+    private StatusType _statusType = StatusType.Info;
+
+    // Dialog state
+    private bool _showDialog;
+    private UkAssetFormModel _editModel = new();
+    private UkAssetDisplayModel? _deleteTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssetsAsync();
+    }
+
+    private async Task LoadAssetsAsync()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var items = await UkAssetsApiClient.GetAllAsync();
+            _assets = [.. items];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load UK assets");
+            _statusMessage = "Could not load UK assets. Please try again.";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // ── Dialog helpers ──────────────────────────────────────────────────
+
+    private void OpenAddDialog()
+    {
+        _editModel = new UkAssetFormModel();
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void OpenEditDialog(UkAssetDisplayModel asset)
+    {
+        _editModel = new UkAssetFormModel
+        {
+            Id = asset.Id,
+            Category = asset.Category,
+            Provider = asset.Provider,
+            // Account number is masked in the display model; user must re-enter to update.
+            AccountNumber = string.Empty,
+            Nominee = asset.Nominee,
+            TaxNotes = asset.TaxNotes
+        };
+        _statusMessage = null;
+        _showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+        _editModel = new UkAssetFormModel();
+    }
+
+    // ── Save ────────────────────────────────────────────────────────────
+
+    private async Task SaveAssetAsync()
+    {
+        _isSaving = true;
+        _statusMessage = null;
+
+        try
+        {
+            UkAssetDisplayModel saved;
+
+            if (_editModel.IsNew)
+            {
+                saved = await UkAssetsApiClient.AddAsync(_editModel);
+                _assets.Add(saved);
+                _statusMessage = $"Asset at {saved.Provider} added successfully.";
+            }
+            else
+            {
+                saved = await UkAssetsApiClient.UpdateAsync(_editModel);
+                var idx = _assets.FindIndex(a => a.Id == saved.Id);
+                if (idx >= 0) _assets[idx] = saved;
+                _statusMessage = $"Asset at {saved.Provider} updated successfully.";
+            }
+
+            _statusType = StatusType.Success;
+            _showDialog = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save UK asset");
+            _statusMessage = $"Save failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Delete ──────────────────────────────────────────────────────────
+
+    private void OpenDeleteConfirm(UkAssetDisplayModel asset)
+    {
+        _deleteTarget = asset;
+        _statusMessage = null;
+    }
+
+    private void CancelDelete() => _deleteTarget = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget is null) return;
+
+        _isSaving = true;
+
+        try
+        {
+            await UkAssetsApiClient.DeleteAsync(_deleteTarget.Id);
+            _assets.RemoveAll(a => a.Id == _deleteTarget.Id);
+            _statusMessage = $"Asset at {_deleteTarget.Provider} deleted.";
+            _statusType = StatusType.Success;
+            _deleteTarget = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete UK asset {AssetId}", _deleteTarget?.Id);
+            _statusMessage = $"Delete failed: {ex.Message}";
+            _statusType = StatusType.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────
+
+    private static string CategoryLabel(UkAssetCategory category) => category switch
+    {
+        UkAssetCategory.Bank    => "Bank",
+        UkAssetCategory.ISA     => "ISA",
+        UkAssetCategory.Pension => "Pension",
+        _                       => category.ToString()
+    };
+}

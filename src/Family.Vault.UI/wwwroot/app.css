@@ -399,3 +399,143 @@ a:hover {
     max-width: 680px;
     margin-top: 0.5rem;
 }
+
+/* ---------------------------------------------------------
+   UK Assets – toolbar
+   --------------------------------------------------------- */
+.vault-assets-toolbar {
+    margin-bottom: 1.25rem;
+}
+
+/* ---------------------------------------------------------
+   Table wrapper (horizontal scroll on small screens)
+   --------------------------------------------------------- */
+.vault-table-wrapper {
+    overflow-x: auto;
+}
+
+/* ---------------------------------------------------------
+   UK Assets – actions cell
+   --------------------------------------------------------- */
+.vault-actions-cell {
+    display: flex;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------
+   Tax notes – truncate long text in the table cell
+   --------------------------------------------------------- */
+.vault-tax-notes {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------
+   Masked account number
+   --------------------------------------------------------- */
+.vault-masked {
+    font-family: monospace;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------
+   Category badges
+   --------------------------------------------------------- */
+.vault-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vault-badge--bank {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.vault-badge--isa {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--pension {
+    background-color: #faf5ff;
+    color: #7e22ce;
+}
+
+/* ---------------------------------------------------------
+   Modal overlay
+   --------------------------------------------------------- */
+.vault-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+/* ---------------------------------------------------------
+   Modal panel
+   --------------------------------------------------------- */
+.vault-modal {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.75rem;
+    position: relative;
+}
+
+.vault-modal--narrow {
+    max-width: 420px;
+}
+
+.vault-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.vault-modal__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text);
+}
+
+.vault-modal__close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--color-muted);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    line-height: 1;
+}
+
+.vault-modal__close:hover {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+.vault-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}

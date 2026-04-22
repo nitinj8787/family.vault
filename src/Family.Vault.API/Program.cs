@@ -63,6 +63,9 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 // Singleton so that in-memory profiles survive across requests.
 // Replace with a scoped, DB-backed implementation for production.
 builder.Services.AddSingleton<IProfileService, ProfileService>();
+// Singleton so that in-memory UK assets survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<IUkAssetService, UkAssetService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
