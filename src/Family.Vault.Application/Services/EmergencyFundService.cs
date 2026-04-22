@@ -16,7 +16,7 @@ namespace Family.Vault.Application.Services;
 public sealed class EmergencyFundService(ILogger<EmergencyFundService> logger) : IEmergencyFundService
 {
     private readonly ConcurrentDictionary<(string UserId, Guid EntryId), EmergencyFund> _store =
-        new();
+        new ConcurrentDictionary<(string UserId, Guid EntryId), EmergencyFund>();
 
     /// <inheritdoc/>
     public Task<IReadOnlyList<EmergencyFundResponse>> GetAllAsync(

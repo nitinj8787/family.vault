@@ -31,7 +31,7 @@ public sealed class DocumentService(
 
     // In-memory metadata store keyed by (userId, documentId).
     private readonly ConcurrentDictionary<(string UserId, Guid DocId), DocumentMetadata> _metadataStore =
-        new();
+        new ConcurrentDictionary<(string UserId, Guid DocId), DocumentMetadata>();
 
     /// <inheritdoc/>
     public async Task<DocumentUploadResponse> UploadAsync(
