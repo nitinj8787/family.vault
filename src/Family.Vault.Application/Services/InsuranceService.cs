@@ -18,6 +18,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
     private readonly ConcurrentDictionary<(string UserId, Guid PolicyId), InsurancePolicy> _policyStore =
         new();
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<InsuranceResponse>> GetAllAsync(
         string userId,
         CancellationToken cancellationToken = default)
@@ -30,6 +31,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
         return Task.FromResult<IReadOnlyList<InsuranceResponse>>(policies);
     }
 
+    /// <inheritdoc/>
     public Task<InsuranceResponse> AddAsync(
         string userId,
         InsuranceRequest request,
@@ -51,6 +53,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
         return Task.FromResult(MapToResponse(policy));
     }
 
+    /// <inheritdoc/>
     public Task<InsuranceResponse?> UpdateAsync(
         string userId,
         Guid id,
@@ -76,6 +79,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
         return Task.FromResult<InsuranceResponse?>(MapToResponse(updated));
     }
 
+    /// <inheritdoc/>
     public Task<bool> DeleteAsync(
         string userId,
         Guid id,

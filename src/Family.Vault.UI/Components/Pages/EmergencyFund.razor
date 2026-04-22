@@ -42,7 +42,8 @@ else
                            class="vault-input vault-input--sm"
                            placeholder="e.g. 2500"
                            @bind="_monthlyExpensesInput"
-                           @onchange="OnMonthlyExpensesChanged" />
+                           @bind:event="oninput"
+                           @bind:after="ApplyMonthlyExpenses" />
                 </div>
             </div>
         }
@@ -257,10 +258,12 @@ else
 
     // ── Monthly expenses comparison ────────────────────────────────────
 
-    private void OnMonthlyExpensesChanged(ChangeEventArgs e)
+    private void ApplyMonthlyExpenses()
     {
-        if (decimal.TryParse(e.Value?.ToString(), out var val) && val > 0)
+        if (decimal.TryParse(_monthlyExpensesInput, out var val) && val > 0)
             _monthlyExpenses = val;
+        else
+            _monthlyExpenses = null;
     }
 
     private void ClearMonthlyExpenses()

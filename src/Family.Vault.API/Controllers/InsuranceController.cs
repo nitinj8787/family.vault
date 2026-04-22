@@ -13,6 +13,7 @@ public sealed class InsuranceController(
     IInsuranceService insuranceService,
     ILogger<InsuranceController> logger) : ControllerBase
 {
+    /// <summary>Returns all insurance policies for the currently authenticated user.</summary>
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<InsuranceResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -24,6 +25,7 @@ public sealed class InsuranceController(
         return Ok(policies);
     }
 
+    /// <summary>Adds a new insurance policy for the currently authenticated user.</summary>
     [HttpPost]
     [ProducesResponseType(typeof(InsuranceResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -48,6 +50,7 @@ public sealed class InsuranceController(
         }
     }
 
+    /// <summary>Updates an existing insurance policy for the currently authenticated user.</summary>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(InsuranceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -81,6 +84,7 @@ public sealed class InsuranceController(
         }
     }
 
+    /// <summary>Deletes an insurance policy for the currently authenticated user.</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

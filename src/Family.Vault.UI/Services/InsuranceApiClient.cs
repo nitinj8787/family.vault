@@ -13,6 +13,7 @@ public sealed class InsuranceApiClient(
     ITokenProvider tokenProvider,
     ILogger<InsuranceApiClient> logger) : IInsuranceApiClient
 {
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<InsuranceDisplayModel>> GetAllAsync(
         CancellationToken cancellationToken = default)
     {
@@ -31,6 +32,7 @@ public sealed class InsuranceApiClient(
         return items;
     }
 
+    /// <inheritdoc/>
     public async Task<InsuranceDisplayModel> AddAsync(
         InsuranceFormModel model,
         CancellationToken cancellationToken = default)
@@ -50,6 +52,7 @@ public sealed class InsuranceApiClient(
             ?? throw new InvalidOperationException("Failed to create insurance policy: API returned an empty response.");
     }
 
+    /// <inheritdoc/>
     public async Task<InsuranceDisplayModel> UpdateAsync(
         InsuranceFormModel model,
         CancellationToken cancellationToken = default)
@@ -70,6 +73,7 @@ public sealed class InsuranceApiClient(
                 $"Failed to update insurance policy {model.Id}: API returned an empty response.");
     }
 
+    /// <inheritdoc/>
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Deleting insurance policy {PolicyId}", id);
