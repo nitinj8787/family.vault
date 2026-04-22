@@ -11,11 +11,9 @@
 @inject IEmergencyFundApiClient EmergencyFundApiClient
 @inject IWillsApiClient WillsApiClient
 @inject ILogger<Dashboard> Logger
+@inject NavigationManager Navigation
 
 <PageTitle>Dashboard – Family Vault</PageTitle>
-
-<h1>Dashboard</h1>
-<p class="vault-page-subtitle">A single view of your Family Vault — assets, protection gaps, and readiness at a glance.</p>
 
 @if (_isLoading)
 {
@@ -23,81 +21,184 @@
 }
 else
 {
-    @* ── CRITICAL: missing-will banner ── *@
-    @if (_missingWillCount > 0)
-    {
-        <div class="vault-dash-alert vault-dash-alert--critical" role="alert">
-            <span class="vault-dash-alert__icon" aria-hidden="true">🚨</span>
-            <div>
-                <strong>CRITICAL — @_missingWillCount missing @(_missingWillCount == 1 ? "will" : "wills")</strong>
-                <p class="vault-dash-alert__detail">
-                    @_missingWillCount @(_missingWillCount == 1 ? "jurisdiction has" : "jurisdictions have")
-                    no valid will recorded. Your estate may not be distributed according to your wishes.
-                    <a href="/wills-legal">Review Wills &amp; Legal →</a>
-                </p>
+    @* ── Life Snapshot ── *@
+    <div class="vault-dash-snapshot">
+        <div class="vault-dash-snapshot__welcome">
+            <AuthorizeView>
+                <Authorized>
+                    <h1 class="vault-dash-snapshot__title">Welcome back, @(context.User.Identity?.Name ?? "there") 👋</h1>
+                </Authorized>
+                <NotAuthorized>
+                    <h1 class="vault-dash-snapshot__title">Your Family Vault 🔒</h1>
+                </NotAuthorized>
+            </AuthorizeView>
+            <p class="vault-dash-snapshot__subtitle">Your family management hub — protection gaps, readiness, and actions at a glance.</p>
+            <p class="vault-dash-snapshot__updated">
+                <span aria-hidden="true">🕐</span> Last refreshed @_loadedAt.ToString("dddd, d MMMM yyyy 'at' HH:mm")
+            </p>
+            <div class="vault-dash-snapshot__stats">
+                <span class="vault-dash-snapshot__stat">
+                    <strong>@_totalAssets</strong> assets tracked
+                </span>
+                <span class="vault-dash-snapshot__stat-sep" aria-hidden="true">·</span>
+                <span class="vault-dash-snapshot__stat">
+                    <strong>@_nominees</strong> nominees registered
+                </span>
             </div>
         </div>
-    }
-
-    @* ── Warning: assets without nominees ── *@
-    @if (_assetsWithoutNominee > 0)
-    {
-        <div class="vault-dash-alert vault-dash-alert--warning" role="alert">
-            <span class="vault-dash-alert__icon" aria-hidden="true">⚠️</span>
-            <div>
-                <strong>@_assetsWithoutNominee @(_assetsWithoutNominee == 1 ? "asset has" : "assets have") no nominee</strong>
-                <p class="vault-dash-alert__detail">
-                    Uncovered assets may cause delays in estate settlement.
-                    Review nominees across UK Assets, India Assets, Bank Accounts, Investments, and Insurance.
-                </p>
+        <div class="vault-dash-snapshot__score-panel">
+            <div class="vault-dash-snapshot__score-label">Emergency Readiness</div>
+            <div class="vault-dash-snapshot__score-number vault-dash-snapshot__score-number--@ScoreFillColor"
+                 role="img"
+                 aria-label="Readiness score @_readinessScore out of 100">
+                @_readinessScore<span class="vault-dash-snapshot__score-max">/100</span>
             </div>
-        </div>
-    }
-
-    @* ── Metric cards ── *@
-    <div class="vault-dash-metrics">
-
-        @* Total tracked assets *@
-        <div class="vault-dash-card">
-            <span class="vault-dash-card__icon" aria-hidden="true">📊</span>
-            <div class="vault-dash-card__body">
-                <div class="vault-dash-card__value">@_totalAssets</div>
-                <div class="vault-dash-card__label">Total Tracked Assets</div>
+            <div class="vault-dash-progress-bar"
+                 role="progressbar"
+                 aria-valuenow="@_readinessScore"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 aria-label="Readiness progress">
+                <div class="vault-dash-progress-fill vault-dash-progress-fill--@ScoreFillColor"
+                     style="width: @_readinessScore%">
+                </div>
             </div>
-        </div>
-
-        @* Missing nominees *@
-        <div class="vault-dash-card @(_assetsWithoutNominee > 0 ? "vault-dash-card--warn" : "vault-dash-card--ok")">
-            <span class="vault-dash-card__icon" aria-hidden="true">@(_assetsWithoutNominee > 0 ? "⚠️" : "✅")</span>
-            <div class="vault-dash-card__body">
-                <div class="vault-dash-card__value">@_assetsWithoutNominee</div>
-                <div class="vault-dash-card__label">Assets Missing Nominee</div>
-            </div>
-        </div>
-
-        @* Missing will *@
-        <div class="vault-dash-card @(_missingWillCount > 0 ? "vault-dash-card--critical" : "vault-dash-card--ok")">
-            <span class="vault-dash-card__icon" aria-hidden="true">@(_missingWillCount > 0 ? "🚨" : "✅")</span>
-            <div class="vault-dash-card__body">
-                <div class="vault-dash-card__value">@_missingWillCount</div>
-                <div class="vault-dash-card__label">Jurisdictions Missing Will</div>
-            </div>
-        </div>
-
-        @* Emergency readiness score *@
-        <div class="vault-dash-card vault-dash-card--score">
-            <div class="vault-dash-score @ScoreClass" role="img" aria-label="Readiness score @_readinessScore out of 100">
-                <span class="vault-dash-score__value">@_readinessScore</span>
-                <span class="vault-dash-score__max">/100</span>
-            </div>
-            <div class="vault-dash-card__body">
-                <div class="vault-dash-card__label">Emergency Readiness Score</div>
-                <div class="vault-dash-score__desc">@ScoreDescription</div>
-            </div>
+            <p class="vault-dash-snapshot__score-desc">@ScoreDescription</p>
         </div>
     </div>
 
-    @* ── Section status ── *@
+    @* ── Smart Insights ── *@
+    <h2 class="vault-dash-section-title">Smart Insights</h2>
+    @if (HasInsights)
+    {
+        <div class="vault-dash-insights">
+
+            @if (_missingWillCount > 0)
+            {
+                <div class="vault-dash-insight vault-dash-insight--critical">
+                    <span class="vault-dash-insight__icon" aria-hidden="true">🚨</span>
+                    <div class="vault-dash-insight__body">
+                        <p class="vault-dash-insight__title">
+                            Missing Will — @_missingWillCount @(_missingWillCount == 1 ? "Jurisdiction" : "Jurisdictions")
+                        </p>
+                        <p class="vault-dash-insight__desc">
+                            Your estate may not be distributed as intended.
+                            Add or update a will for each jurisdiction where you hold assets.
+                        </p>
+                    </div>
+                    <button class="vault-btn vault-btn--insight-cta vault-btn--cta-critical"
+                            @onclick='() => Navigation.NavigateTo("/wills-legal")'>
+                        Review Wills →
+                    </button>
+                </div>
+            }
+
+            @if (_assetsWithoutNominee > 0)
+            {
+                <div class="vault-dash-insight vault-dash-insight--warning">
+                    <span class="vault-dash-insight__icon" aria-hidden="true">⚠️</span>
+                    <div class="vault-dash-insight__body">
+                        <p class="vault-dash-insight__title">
+                            @_assetsWithoutNominee @(_assetsWithoutNominee == 1 ? "Asset" : "Assets") Without a Nominee
+                        </p>
+                        <p class="vault-dash-insight__desc">
+                            Uncovered assets can cause estate settlement delays.
+                            Review nominees across UK Assets, India Assets, Bank Accounts, Investments, and Insurance.
+                        </p>
+                    </div>
+                    <button class="vault-btn vault-btn--insight-cta vault-btn--cta-warning"
+                            @onclick='() => Navigation.NavigateTo("/nominees")'>
+                        Add Nominees →
+                    </button>
+                </div>
+            }
+
+            @if (_emergencyFundEntries == 0)
+            {
+                <div class="vault-dash-insight vault-dash-insight--warning">
+                    <span class="vault-dash-insight__icon" aria-hidden="true">💰</span>
+                    <div class="vault-dash-insight__body">
+                        <p class="vault-dash-insight__title">No Emergency Fund Recorded</p>
+                        <p class="vault-dash-insight__desc">
+                            A liquid emergency fund is the first line of defence for your family.
+                            Record your emergency savings to improve your readiness score.
+                        </p>
+                    </div>
+                    <button class="vault-btn vault-btn--insight-cta vault-btn--cta-warning"
+                            @onclick='() => Navigation.NavigateTo("/emergency-fund")'>
+                        Add Fund →
+                    </button>
+                </div>
+            }
+            else if (_emergencyFundTotal < MinimumRecommendedEmergencyFund)
+            {
+                <div class="vault-dash-insight vault-dash-insight--warning">
+                    <span class="vault-dash-insight__icon" aria-hidden="true">💰</span>
+                    <div class="vault-dash-insight__body">
+                        <p class="vault-dash-insight__title">Low Emergency Fund Balance</p>
+                        <p class="vault-dash-insight__desc">
+                            Your recorded emergency fund is low. Consider building up 3–6 months of living expenses as a financial safety net.
+                        </p>
+                    </div>
+                    <button class="vault-btn vault-btn--insight-cta vault-btn--cta-warning"
+                            @onclick='() => Navigation.NavigateTo("/emergency-fund")'>
+                        Review Fund →
+                    </button>
+                </div>
+            }
+
+            @if (_insuranceNoNominee > 0)
+            {
+                <div class="vault-dash-insight vault-dash-insight--warning">
+                    <span class="vault-dash-insight__icon" aria-hidden="true">🛡️</span>
+                    <div class="vault-dash-insight__body">
+                        <p class="vault-dash-insight__title">
+                            @_insuranceNoNominee Insurance @(_insuranceNoNominee == 1 ? "Policy" : "Policies") Missing a Nominee
+                        </p>
+                        <p class="vault-dash-insight__desc">
+                            Insurance policies without a designated beneficiary can delay or complicate claims.
+                            Ensure each policy has an up-to-date nominee.
+                        </p>
+                    </div>
+                    <button class="vault-btn vault-btn--insight-cta vault-btn--cta-warning"
+                            @onclick='() => Navigation.NavigateTo("/insurance")'>
+                        Review Insurance →
+                    </button>
+                </div>
+            }
+
+        </div>
+    }
+    else
+    {
+        <div class="vault-dash-allclear" role="status">
+            <span aria-hidden="true">✅</span>
+            All clear — no outstanding action items found. Your vault is in great shape!
+        </div>
+    }
+
+    @* ── Quick Actions ── *@
+    <h2 class="vault-dash-section-title">Quick Actions</h2>
+    <div class="vault-dash-quick-actions">
+
+        <button class="vault-dash-action-card" @onclick='() => Navigation.NavigateTo("/bank-accounts")'>
+            <span class="vault-dash-action-card__icon" aria-hidden="true">🏛</span>
+            <span class="vault-dash-action-card__label">Add Bank Account</span>
+        </button>
+
+        <button class="vault-dash-action-card" @onclick='() => Navigation.NavigateTo("/upload")'>
+            <span class="vault-dash-action-card__icon" aria-hidden="true">⬆️</span>
+            <span class="vault-dash-action-card__label">Upload Document</span>
+        </button>
+
+        <button class="vault-dash-action-card" @onclick='() => Navigation.NavigateTo("/nominees")'>
+            <span class="vault-dash-action-card__icon" aria-hidden="true">🧾</span>
+            <span class="vault-dash-action-card__label">Add Nominee</span>
+        </button>
+
+    </div>
+
+    @* ── Section Overview ── *@
     <h2 class="vault-dash-section-title">Section Overview</h2>
     <div class="vault-dash-sections">
 
@@ -109,9 +210,7 @@ else
             </div>
             @if (_ukAssetsNoNominee > 0)
             {
-                <p class="vault-dash-section-card__issue">
-                    ⚠️ @_ukAssetsNoNominee without nominee
-                </p>
+                <p class="vault-dash-section-card__issue">⚠️ @_ukAssetsNoNominee without nominee</p>
             }
         </div>
 
@@ -123,9 +222,7 @@ else
             </div>
             @if (_indiaAssetsNoNominee > 0)
             {
-                <p class="vault-dash-section-card__issue">
-                    ⚠️ @_indiaAssetsNoNominee without nominee
-                </p>
+                <p class="vault-dash-section-card__issue">⚠️ @_indiaAssetsNoNominee without nominee</p>
             }
         </div>
 
@@ -137,9 +234,7 @@ else
             </div>
             @if (_bankAccountsNoNominee > 0)
             {
-                <p class="vault-dash-section-card__issue">
-                    ⚠️ @_bankAccountsNoNominee without nominee
-                </p>
+                <p class="vault-dash-section-card__issue">⚠️ @_bankAccountsNoNominee without nominee</p>
             }
         </div>
 
@@ -151,9 +246,7 @@ else
             </div>
             @if (_investmentsNoNominee > 0)
             {
-                <p class="vault-dash-section-card__issue">
-                    ⚠️ @_investmentsNoNominee without nominee
-                </p>
+                <p class="vault-dash-section-card__issue">⚠️ @_investmentsNoNominee without nominee</p>
             }
         </div>
 
@@ -165,9 +258,7 @@ else
             </div>
             @if (_insuranceNoNominee > 0)
             {
-                <p class="vault-dash-section-card__issue">
-                    ⚠️ @_insuranceNoNominee without nominee
-                </p>
+                <p class="vault-dash-section-card__issue">⚠️ @_insuranceNoNominee without nominee</p>
             }
         </div>
 
@@ -189,7 +280,7 @@ else
 
         <div class="vault-dash-section-card @(_emergencyFundTotal == 0 ? "vault-dash-section-card--warn" : "")">
             <div class="vault-dash-section-card__header">
-                <span aria-hidden="true">🚨</span>
+                <span aria-hidden="true">💰</span>
                 <a href="/emergency-fund" class="vault-dash-section-card__title">Emergency Fund</a>
                 <span class="vault-dash-section-card__count">@_emergencyFundEntries @(_emergencyFundEntries == 1 ? "entry" : "entries")</span>
             </div>
@@ -213,7 +304,7 @@ else
 
     </div>
 
-    @* ── Readiness score breakdown ── *@
+    @* ── Readiness Score Breakdown ── *@
     <h2 class="vault-dash-section-title">Readiness Score Breakdown</h2>
     <div class="vault-dash-score-breakdown">
         <div class="vault-dash-score-row">
@@ -294,11 +385,20 @@ else
 
 @code {
     // -----------------------------------------------------------------
+    // Constants
+    // -----------------------------------------------------------------
+
+    private const decimal MinimumRecommendedEmergencyFund = 1000m;
+    private const int GoodScoreThreshold    = 80;
+    private const int WarningScoreThreshold = 50;
+
+    // -----------------------------------------------------------------
     // State
     // -----------------------------------------------------------------
 
     private bool _isLoading = true;
     private string? _loadError;
+    private DateTime _loadedAt;
 
     // Section counts
     private int _ukAssets;
@@ -336,13 +436,24 @@ else
     // Helpers
     // -----------------------------------------------------------------
 
-    private string ScoreClass => _readinessScore >= 80 ? "vault-dash-score--good"
-        : _readinessScore >= 50 ? "vault-dash-score--warn"
+    private bool HasInsights =>
+        _missingWillCount > 0
+        || _assetsWithoutNominee > 0
+        || _emergencyFundEntries == 0
+        || _emergencyFundTotal < MinimumRecommendedEmergencyFund
+        || _insuranceNoNominee > 0;
+
+    private string ScoreFillColor => _readinessScore >= GoodScoreThreshold ? "good"
+        : _readinessScore >= WarningScoreThreshold ? "warn"
+        : "low";
+
+    private string ScoreClass => _readinessScore >= GoodScoreThreshold ? "vault-dash-score--good"
+        : _readinessScore >= WarningScoreThreshold ? "vault-dash-score--warn"
         : "vault-dash-score--low";
 
-    private string ScoreDescription => _readinessScore >= 80
+    private string ScoreDescription => _readinessScore >= GoodScoreThreshold
         ? "Great – your vault is well protected."
-        : _readinessScore >= 50
+        : _readinessScore >= WarningScoreThreshold
             ? "Moderate – a few gaps to address."
             : "Low – important items are missing.";
 
@@ -383,30 +494,30 @@ else
             var wills         = await t9;
 
             // Section counts
-            _ukAssets           = ukAssets.Count;
-            _indiaAssets        = indiaAssets.Count;
-            _bankAccounts       = bankAccounts.Count;
-            _investments        = investments.Count;
-            _insurance          = insurance.Count;
-            _properties         = properties.Count;
-            _nominees           = nominees.Count;
+            _ukAssets             = ukAssets.Count;
+            _indiaAssets          = indiaAssets.Count;
+            _bankAccounts         = bankAccounts.Count;
+            _investments          = investments.Count;
+            _insurance            = insurance.Count;
+            _properties           = properties.Count;
+            _nominees             = nominees.Count;
             _emergencyFundEntries = emergencyFund.Count;
-            _willEntries        = wills.Count;
+            _willEntries          = wills.Count;
 
             // Nominee gaps per section
-            _ukAssetsNoNominee       = ukAssets.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
-            _indiaAssetsNoNominee    = indiaAssets.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
-            _bankAccountsNoNominee   = bankAccounts.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
-            _investmentsNoNominee    = investments.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
-            _insuranceNoNominee      = insurance.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
+            _ukAssetsNoNominee     = ukAssets.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
+            _indiaAssetsNoNominee  = indiaAssets.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
+            _bankAccountsNoNominee = bankAccounts.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
+            _investmentsNoNominee  = investments.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
+            _insuranceNoNominee    = insurance.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
 
             // Aggregates
-            _totalAssets         = _ukAssets + _indiaAssets + _bankAccounts + _investments + _insurance + _properties;
-            _nomineeableAssets   = _ukAssets + _indiaAssets + _bankAccounts + _investments + _insurance;
+            _totalAssets          = _ukAssets + _indiaAssets + _bankAccounts + _investments + _insurance + _properties;
+            _nomineeableAssets    = _ukAssets + _indiaAssets + _bankAccounts + _investments + _insurance;
             _assetsWithoutNominee = _ukAssetsNoNominee + _indiaAssetsNoNominee + _bankAccountsNoNominee
                                     + _investmentsNoNominee + _insuranceNoNominee;
-            _missingWillCount    = wills.Count(w => w.IsMissingWill);
-            _emergencyFundTotal  = emergencyFund.Sum(e => e.Amount);
+            _missingWillCount     = wills.Count(w => w.IsMissingWill);
+            _emergencyFundTotal   = emergencyFund.Sum(e => e.Amount);
 
             // Score calculation (25 pts each, 100 total)
             // Wills: full score if all recorded jurisdictions have a will (or no jurisdictions yet = 0)
@@ -424,6 +535,8 @@ else
             _assetsScore = _totalAssets > 0 ? 25 : 0;
 
             _readinessScore = _willsScore + _nomineesScore + _emergencyScore + _assetsScore;
+
+            _loadedAt = DateTime.Now;
 
             Logger.LogInformation(
                 "Dashboard loaded: totalAssets={Total}, missingWills={Wills}, assetsNoNominee={Nominees}, score={Score}",
