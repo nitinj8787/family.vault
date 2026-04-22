@@ -87,6 +87,9 @@ builder.Services.AddSingleton<IEmergencyFundService, EmergencyFundService>();
 // Singleton so that in-memory nominee entries survive across requests.
 // Replace with a scoped, DB-backed implementation for production.
 builder.Services.AddSingleton<INomineeService, NomineeService>();
+// Singleton so that in-memory tax entries survive across requests.
+// Replace with a scoped, DB-backed implementation for production.
+builder.Services.AddSingleton<ITaxService, TaxService>();
 builder.Services.AddSingleton<IStorageService>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
