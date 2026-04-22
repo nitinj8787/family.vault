@@ -15,14 +15,14 @@ namespace Family.Vault.Application.Services;
 /// </summary>
 public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsuranceService
 {
-    private readonly ConcurrentDictionary<(string UserId, Guid PolicyId), InsurancePolicy> _store =
+    private readonly ConcurrentDictionary<(string UserId, Guid PolicyId), InsurancePolicy> _policyStore =
         new();
 
     public Task<IReadOnlyList<InsuranceResponse>> GetAllAsync(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        var policies = _store.Values
+        var policies = _policyStore.Values
             .Where(p => p.UserId == userId)
             .Select(MapToResponse)
             .ToList();
@@ -42,10 +42,10 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
             id, userId, request.Provider, request.PolicyType, request.PolicyNumber,
             request.Coverage, request.Nominee, request.ClaimContact);
 
-        _store[(userId, id)] = policy;
+        _policyStore[(userId, id)] = policy;
 
         logger.LogInformation(
-            "Insurance policy {PolicyId} added for user {UserId} (provider={Provider}, policyType={PolicyType})",
+            "Insurance policy {PolicyId} added for user {UserId} (provider={SanitizedProvider}, policyType={SanitizedPolicyType})",
             id, userId, LogSanitizer.Sanitize(request.Provider), LogSanitizer.Sanitize(request.PolicyType));
 
         return Task.FromResult(MapToResponse(policy));
@@ -59,7 +59,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
     {
         ValidateRequest(request);
 
-        if (!_store.ContainsKey((userId, id)))
+        if (!_policyStore.ContainsKey((userId, id)))
         {
             logger.LogWarning(
                 "Update requested for non-existent insurance policy {PolicyId} for user {UserId}", id, userId);
@@ -70,7 +70,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
             id, userId, request.Provider, request.PolicyType, request.PolicyNumber,
             request.Coverage, request.Nominee, request.ClaimContact);
 
-        _store[(userId, id)] = updated;
+        _policyStore[(userId, id)] = updated;
 
         logger.LogInformation("Insurance policy {PolicyId} updated for user {UserId}", id, userId);
         return Task.FromResult<InsuranceResponse?>(MapToResponse(updated));
@@ -81,7 +81,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var removed = _store.TryRemove((userId, id), out _);
+        var removed = _policyStore.TryRemove((userId, id), out _);
 
         if (removed)
             logger.LogInformation("Insurance policy {PolicyId} deleted for user {UserId}", id, userId);

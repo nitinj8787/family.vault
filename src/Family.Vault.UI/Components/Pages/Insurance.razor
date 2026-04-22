@@ -35,14 +35,14 @@ else
         <div class="vault-insurance-grid">
             @foreach (var policy in _policies)
             {
-                var missingNominee = string.IsNullOrWhiteSpace(policy.Nominee);
-                <article class="vault-insurance-card @(missingNominee ? "vault-insurance-card--missing-nominee" : string.Empty)">
+                var isMissingNominee = string.IsNullOrWhiteSpace(policy.Nominee);
+                <article class="vault-insurance-card @(isMissingNominee ? "vault-insurance-card--missing-nominee" : string.Empty)">
                     <header class="vault-insurance-card__header">
                         <h2 class="vault-insurance-card__title">@policy.Provider</h2>
                         <span class="vault-badge vault-badge--insurance">@policy.PolicyType</span>
                     </header>
 
-                    @if (missingNominee)
+                    @if (isMissingNominee)
                     {
                         <div class="vault-insurance-warning" role="status">⚠ Nominee missing</div>
                     }
@@ -55,7 +55,7 @@ else
                         <dd>@policy.Coverage</dd>
 
                         <dt>Nominee</dt>
-                        <dd>@(missingNominee ? "—" : policy.Nominee)</dd>
+                        <dd>@(isMissingNominee ? "—" : policy.Nominee)</dd>
 
                         <dt>Claim Contact</dt>
                         <dd>@policy.ClaimContact</dd>

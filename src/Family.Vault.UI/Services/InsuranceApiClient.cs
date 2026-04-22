@@ -44,10 +44,10 @@ public sealed class InsuranceApiClient(
         await AttachAuthorizationAsync(request, cancellationToken);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
-        await ThrowIfFailureAsync(response, "add", cancellationToken);
+        await ThrowIfFailureAsync(response, "create", cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<InsuranceDisplayModel>(cancellationToken)
-            ?? throw new InvalidOperationException("API returned an empty response after adding insurance policy.");
+            ?? throw new InvalidOperationException("Failed to create insurance policy: API returned an empty response.");
     }
 
     public async Task<InsuranceDisplayModel> UpdateAsync(
@@ -66,7 +66,8 @@ public sealed class InsuranceApiClient(
         await ThrowIfFailureAsync(response, "update", cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<InsuranceDisplayModel>(cancellationToken)
-            ?? throw new InvalidOperationException("API returned an empty response after updating insurance policy.");
+            ?? throw new InvalidOperationException(
+                $"Failed to update insurance policy {model.Id}: API returned an empty response.");
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
