@@ -3,14 +3,17 @@ using Family.Vault.Application.Models;
 
 namespace Family.Vault.Application.Services;
 
-public sealed class FamilyVaultService(IBlobStorageService blobStorageService) : IFamilyVaultService
+public sealed class FamilyVaultService(IStorageService storageService) : IFamilyVaultService
 {
     public Task UploadAsync(string fileName, Stream content, CancellationToken cancellationToken = default) =>
-        blobStorageService.UploadAsync(fileName, content, cancellationToken);
+        storageService.UploadAsync(fileName, content, cancellationToken);
+
+    public Task DownloadAsync(string fileName, Stream destination, CancellationToken cancellationToken = default) =>
+        storageService.DownloadAsync(fileName, destination, cancellationToken);
 
     public async Task<IReadOnlyCollection<VaultItemResponse>> GetVaultItemsAsync(CancellationToken cancellationToken = default)
     {
-        var names = await blobStorageService.GetFileNamesAsync(cancellationToken);
+        var names = await storageService.GetFileNamesAsync(cancellationToken);
         return names.Select(name => new VaultItemResponse(name)).ToArray();
     }
 }

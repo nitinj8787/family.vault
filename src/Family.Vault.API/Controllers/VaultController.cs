@@ -1,5 +1,6 @@
 using Family.Vault.Application.Abstractions;
 using Family.Vault.API.Configuration;
+using Family.Vault.Application.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -21,6 +22,42 @@ public sealed class VaultController(
         var items = await familyVaultService.GetVaultItemsAsync(cancellationToken);
         logger.LogInformation("Returning {Count} vault items", items.Count);
         return Ok(items);
+    }
+
+    [HttpGet("download/{fileName}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Download(string fileName, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return BadRequest("File name is required.");
+        }
+
+        logger.LogInformation("Download requested for {FileName}", LogSanitizer.Sanitize(fileName));
+
+        var memoryStream = new MemoryStream();
+
+        try
+        {
+            await familyVaultService.DownloadAsync(fileName, memoryStream, cancellationToken);
+        }
+        catch (FileNotFoundException)
+        {
+            await memoryStream.DisposeAsync();
+            logger.LogWarning("Download requested for non-existent file {FileName}", LogSanitizer.Sanitize(fileName));
+            return NotFound($"File '{fileName}' was not found.");
+        }
+        catch
+        {
+            await memoryStream.DisposeAsync();
+            throw;
+        }
+
+        memoryStream.Position = 0;
+
+        // FileStreamResult takes ownership of the stream and disposes it after the response is written.
+        return File(memoryStream, "application/octet-stream", fileName);
     }
 
     [HttpPost("upload")]
@@ -47,7 +84,8 @@ public sealed class VaultController(
         await using var stream = file.OpenReadStream();
         await familyVaultService.UploadAsync(file.FileName, stream, cancellationToken);
 
-        logger.LogInformation("Uploaded vault file {FileName}", file.FileName);
+        logger.LogInformation("Uploaded vault file {FileName}", LogSanitizer.Sanitize(file.FileName));
         return Accepted();
     }
 }
+

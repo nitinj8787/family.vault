@@ -5,6 +5,11 @@ Accept: application/json
 
 ###
 
+GET {{Family.Vault.API_HostAddress}}/api/vault/download/sample.txt
+Accept: application/octet-stream
+
+###
+
 POST {{Family.Vault.API_HostAddress}}/api/vault/upload
 Content-Type: multipart/form-data; boundary=FamilyVaultBoundary
 
