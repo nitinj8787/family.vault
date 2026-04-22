@@ -3,6 +3,7 @@ using Azure.Identity;
 using Family.Vault.API.Configuration;
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Services;
+using Family.Vault.Infrastructure.Secrets;
 using Family.Vault.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +41,28 @@ builder.Services.AddSingleton<IStorageService>(serviceProvider =>
     }
 
     return new BlobStorageService(accountUri, containerName, credential, logger);
+});
+
+builder.Services.AddSingleton<IKeyVaultService>(serviceProvider =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var credential = serviceProvider.GetRequiredService<TokenCredential>();
+    var logger = serviceProvider.GetRequiredService<ILogger<KeyVaultService>>();
+
+    var vaultUriString = configuration["AzureKeyVault:VaultUri"];
+
+    if (string.IsNullOrWhiteSpace(vaultUriString))
+    {
+        throw new InvalidOperationException(
+            "AzureKeyVault configuration is missing required value (VaultUri).");
+    }
+
+    if (!Uri.TryCreate(vaultUriString, UriKind.Absolute, out var vaultUri))
+    {
+        throw new InvalidOperationException($"AzureKeyVault:VaultUri '{vaultUriString}' is not a valid absolute URI.");
+    }
+
+    return new KeyVaultService(vaultUri, credential, logger);
 });
 
 var app = builder.Build();
