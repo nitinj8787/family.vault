@@ -539,3 +539,113 @@ a:hover {
     gap: 0.75rem;
     margin-top: 1.5rem;
 }
+
+/* ---------------------------------------------------------
+   India Assets – page subtitle
+   --------------------------------------------------------- */
+.vault-page-subtitle {
+    color: var(--color-muted);
+    margin-top: -0.5rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------
+   India Assets – legend row
+   --------------------------------------------------------- */
+.vault-india-legend {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+/* ---------------------------------------------------------
+   India Assets – NRE / NRO account-type badges
+   --------------------------------------------------------- */
+.vault-badge--nre {
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.vault-badge--nro {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+/* ---------------------------------------------------------
+   India Assets – repatriation badges
+   --------------------------------------------------------- */
+.vault-badge--repatriable {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+
+.vault-badge--limited {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+/* ---------------------------------------------------------
+   India Assets – "Taxable in India" warning badge
+   --------------------------------------------------------- */
+.vault-badge--taxwarn {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+/* ---------------------------------------------------------
+   India Assets – category badge (neutral teal)
+   --------------------------------------------------------- */
+.vault-badge--india-cat {
+    background-color: #f0f9ff;
+    color: #0369a1;
+}
+
+/* ---------------------------------------------------------
+   India Assets – risk-highlighted table row (NRO)
+   --------------------------------------------------------- */
+.vault-row--risk {
+    background-color: #fff8f0;
+}
+
+.vault-row--risk:hover {
+    background-color: #fff1e0;
+}
+
+/* ---------------------------------------------------------
+   India Assets – status cell (may contain multiple badges)
+   --------------------------------------------------------- */
+.vault-india-status-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+/* ---------------------------------------------------------
+   India Assets – account-type advisory hint inside modal
+   --------------------------------------------------------- */
+.vault-india-hint {
+    font-size: 0.82rem;
+    margin-top: 0.4rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid transparent;
+}
+
+.vault-india-hint--ok {
+    background-color: #f0fdf4;
+    border-color: #16a34a;
+    color: #15803d;
+}
+
+.vault-india-hint--warn {
+    background-color: #fef2f2;
+    border-color: #dc2626;
+    color: #b91c1c;
+}
