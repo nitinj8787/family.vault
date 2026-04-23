@@ -10,6 +10,7 @@ using Azure.Core;
 using Azure.Identity;
 using Family.Vault.API.Authorization;
 using Family.Vault.API.Configuration;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,13 +18,35 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole();
 
 // ---------------------------------------------------------------------------
-// Authentication – Azure AD (Microsoft Entra ID) via JwtBearer.
-// Microsoft.Identity.Web validates the token signature, issuer, audience, and
-// lifetime automatically, using Azure AD's OIDC discovery metadata. All
-// token validation parameters are set to secure-by-default values; only the
-// values loaded from the "AzureAd" configuration section are customised.
+// Local-dev mode flag.
+// When LocalDev:Enabled = true (set in appsettings.Development.json) the app
+// replaces all Azure-dependent services (Azure AD auth, Blob Storage, Key Vault)
+// with lightweight local alternatives so that the application can run end-to-end
+// on a developer workstation without any Azure subscription.
 // ---------------------------------------------------------------------------
-builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+var isLocalDev = builder.Configuration.GetValue<bool>("LocalDev:Enabled");
+
+if (isLocalDev)
+{
+    // ---------------------------------------------------------------------------
+    // Authentication – local dev auto-auth handler.
+    // Every request is automatically authenticated with the synthetic user identity
+    // defined in LocalDev:UserId / LocalDev:Roles configuration values.
+    // ---------------------------------------------------------------------------
+    builder.Services.AddAuthentication("LocalDev")
+        .AddScheme<AuthenticationSchemeOptions, LocalDevAuthHandler>("LocalDev", null);
+}
+else
+{
+    // ---------------------------------------------------------------------------
+    // Authentication – Azure AD (Microsoft Entra ID) via JwtBearer.
+    // Microsoft.Identity.Web validates the token signature, issuer, audience, and
+    // lifetime automatically, using Azure AD's OIDC discovery metadata. All
+    // token validation parameters are set to secure-by-default values; only the
+    // values loaded from the "AzureAd" configuration section are customised.
+    // ---------------------------------------------------------------------------
+    builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+}
 
 // ---------------------------------------------------------------------------
 // Authorization – role-based policies.
@@ -104,53 +127,86 @@ builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
 builder.Services.AddScoped<IInsightService, InsightService>();
 builder.Services.AddScoped<IReadinessScoreService, ReadinessScoreService>();
 
-// Register DefaultAzureCredential as a singleton so that token caching is shared across all
-// consumers and re-authentication round-trips are minimised.
-builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential());
-builder.Services.AddSingleton<IStorageService>(serviceProvider =>
+if (isLocalDev)
 {
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    var credential = serviceProvider.GetRequiredService<TokenCredential>();
-    var logger = serviceProvider.GetRequiredService<ILogger<BlobStorageService>>();
-
-    var accountUriString = configuration["AzureStorage:AccountUri"];
-    var containerName = configuration["AzureStorage:ContainerName"];
-
-    if (string.IsNullOrWhiteSpace(accountUriString) || string.IsNullOrWhiteSpace(containerName))
+    // ---------------------------------------------------------------------------
+    // Local dev storage – files are written to a folder on the local machine.
+    // Configure the root folder via LocalDev:StoragePath in appsettings.Development.json.
+    // Defaults to a "local-storage" subfolder next to the running executable.
+    // ---------------------------------------------------------------------------
+    builder.Services.AddSingleton<IStorageService>(serviceProvider =>
     {
-        throw new InvalidOperationException(
-            "AzureStorage configuration is missing required values (AccountUri, ContainerName).");
-    }
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var logger = serviceProvider.GetRequiredService<ILogger<LocalFileStorageService>>();
+        var storagePath = configuration["LocalDev:StoragePath"]
+            ?? Path.Combine(AppContext.BaseDirectory, "local-storage");
+        return new LocalFileStorageService(storagePath, logger);
+    });
 
-    if (!Uri.TryCreate(accountUriString, UriKind.Absolute, out var accountUri))
+    // ---------------------------------------------------------------------------
+    // Local dev key vault – secrets live in memory, pre-seeded from LocalDev:Secrets.
+    // ---------------------------------------------------------------------------
+    builder.Services.AddSingleton<IKeyVaultService>(serviceProvider =>
     {
-        throw new InvalidOperationException($"AzureStorage:AccountUri '{accountUriString}' is not a valid absolute URI.");
-    }
-
-    return new BlobStorageService(accountUri, containerName, credential, logger);
-});
-
-builder.Services.AddSingleton<IKeyVaultService>(serviceProvider =>
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var logger = serviceProvider.GetRequiredService<ILogger<LocalKeyVaultService>>();
+        return new LocalKeyVaultService(configuration, logger);
+    });
+}
+else
 {
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    var credential = serviceProvider.GetRequiredService<TokenCredential>();
-    var logger = serviceProvider.GetRequiredService<ILogger<KeyVaultService>>();
+    // ---------------------------------------------------------------------------
+    // Production – Azure Blob Storage and Azure Key Vault via DefaultAzureCredential.
+    // Register DefaultAzureCredential as a singleton so that token caching is shared
+    // across all consumers and re-authentication round-trips are minimised.
+    // ---------------------------------------------------------------------------
+    builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential());
 
-    var vaultUriString = configuration["AzureKeyVault:VaultUri"];
-
-    if (string.IsNullOrWhiteSpace(vaultUriString))
+    builder.Services.AddSingleton<IStorageService>(serviceProvider =>
     {
-        throw new InvalidOperationException(
-            "AzureKeyVault configuration is missing required value (VaultUri).");
-    }
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var credential = serviceProvider.GetRequiredService<TokenCredential>();
+        var logger = serviceProvider.GetRequiredService<ILogger<BlobStorageService>>();
 
-    if (!Uri.TryCreate(vaultUriString, UriKind.Absolute, out var vaultUri))
+        var accountUriString = configuration["AzureStorage:AccountUri"];
+        var containerName = configuration["AzureStorage:ContainerName"];
+
+        if (string.IsNullOrWhiteSpace(accountUriString) || string.IsNullOrWhiteSpace(containerName))
+        {
+            throw new InvalidOperationException(
+                "AzureStorage configuration is missing required values (AccountUri, ContainerName).");
+        }
+
+        if (!Uri.TryCreate(accountUriString, UriKind.Absolute, out var accountUri))
+        {
+            throw new InvalidOperationException($"AzureStorage:AccountUri '{accountUriString}' is not a valid absolute URI.");
+        }
+
+        return new BlobStorageService(accountUri, containerName, credential, logger);
+    });
+
+    builder.Services.AddSingleton<IKeyVaultService>(serviceProvider =>
     {
-        throw new InvalidOperationException($"AzureKeyVault:VaultUri '{vaultUriString}' is not a valid absolute URI.");
-    }
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var credential = serviceProvider.GetRequiredService<TokenCredential>();
+        var logger = serviceProvider.GetRequiredService<ILogger<KeyVaultService>>();
 
-    return new KeyVaultService(vaultUri, credential, logger);
-});
+        var vaultUriString = configuration["AzureKeyVault:VaultUri"];
+
+        if (string.IsNullOrWhiteSpace(vaultUriString))
+        {
+            throw new InvalidOperationException(
+                "AzureKeyVault configuration is missing required value (VaultUri).");
+        }
+
+        if (!Uri.TryCreate(vaultUriString, UriKind.Absolute, out var vaultUri))
+        {
+            throw new InvalidOperationException($"AzureKeyVault:VaultUri '{vaultUriString}' is not a valid absolute URI.");
+        }
+
+        return new KeyVaultService(vaultUri, credential, logger);
+    });
+}
 
 var app = builder.Build();
 

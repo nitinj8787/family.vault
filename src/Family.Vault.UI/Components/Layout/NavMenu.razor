@@ -1,5 +1,6 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IConfiguration Config
 
 <button class="vault-nav__hamburger" @onclick="ToggleMenu" aria-expanded="@_menuOpen"
         aria-controls="vault-nav-menu" aria-label="Toggle navigation">
@@ -106,10 +107,16 @@
         <AuthorizeView>
             <Authorized>
                 <span class="vault-nav__user">@context.User.Identity?.Name</span>
-                <a href="MicrosoftIdentity/Account/SignOut" class="vault-nav__signout">Sign out</a>
+                @if (_useAzureAdAuth)
+                {
+                    <a href="MicrosoftIdentity/Account/SignOut" class="vault-nav__signout">Sign out</a>
+                }
             </Authorized>
             <NotAuthorized>
-                <a href="MicrosoftIdentity/Account/SignIn" class="vault-nav__signout">Sign in</a>
+                @if (_useAzureAdAuth)
+                {
+                    <a href="MicrosoftIdentity/Account/SignIn" class="vault-nav__signout">Sign in</a>
+                }
             </NotAuthorized>
         </AuthorizeView>
     </div>
@@ -117,7 +124,14 @@
 
 @code {
     private bool _menuOpen;
+    private bool _useAzureAdAuth;
+
+    protected override void OnInitialized()
+    {
+        _useAzureAdAuth = Config.GetValue<bool>("VaultApi:UseAzureAdAuth");
+    }
 
     private void ToggleMenu() => _menuOpen = !_menuOpen;
     private void CloseMenu() => _menuOpen = false;
 }
+
