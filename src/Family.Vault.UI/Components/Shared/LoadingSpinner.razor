@@ -1,0 +1,10 @@
+<div class="vault-spinner-wrap" role="status" aria-label="@Label">
+    <div class="vault-spinner" aria-hidden="true">
+        <div class="vault-spinner__ring"></div>
+    </div>
+    <span class="vault-spinner__label">@Label</span>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "Loading…";
+}

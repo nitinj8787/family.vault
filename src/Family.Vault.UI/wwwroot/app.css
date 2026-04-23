@@ -2602,3 +2602,255 @@ a:hover {
     color: var(--color-muted);
     padding: 0.75rem 0;
 }
+
+/* =========================================================
+   Skip navigation link (accessibility)
+   ========================================================= */
+.vault-skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0.5rem;
+    z-index: 9000;
+    padding: 0.5rem 1rem;
+    background: var(--color-accent);
+    color: #fff;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: top 0.15s;
+}
+
+.vault-skip-link:focus {
+    top: 0.5rem;
+}
+
+/* =========================================================
+   Loading Spinner
+   ========================================================= */
+.vault-spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 3rem 1rem;
+    color: var(--color-muted);
+}
+
+.vault-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.vault-spinner__ring {
+    width: 100%;
+    height: 100%;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: vault-spin 0.75s linear infinite;
+}
+
+@keyframes vault-spin {
+    to { transform: rotate(360deg); }
+}
+
+.vault-spinner__label {
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* =========================================================
+   Empty State
+   ========================================================= */
+.vault-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 3.5rem 1rem;
+    text-align: center;
+    background: var(--color-surface);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    margin-top: 1.5rem;
+}
+
+.vault-empty-state__icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.vault-empty-state__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.vault-empty-state__message {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 360px;
+}
+
+/* =========================================================
+   Toast Notifications
+   ========================================================= */
+.vault-toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    max-width: 360px;
+    width: calc(100% - 3rem);
+    pointer-events: none;
+}
+
+.vault-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    pointer-events: all;
+    animation: vault-toast-in 0.25s ease;
+}
+
+@keyframes vault-toast-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.vault-toast--success {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.vault-toast--error {
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+}
+
+.vault-toast--warning {
+    background-color: #fffbeb;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+}
+
+.vault-toast--info {
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    color: #0369a1;
+}
+
+.vault-toast__icon {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+.vault-toast__text {
+    flex: 1;
+    line-height: 1.45;
+}
+
+.vault-toast__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: inherit;
+    opacity: 0.6;
+    padding: 0 0.15rem;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+.vault-toast__close:hover {
+    opacity: 1;
+}
+
+/* =========================================================
+   Mobile layout – content and nav adjustments ≤ 768 px
+   ========================================================= */
+@media (max-width: 768px) {
+    .vault-layout {
+        flex-direction: column;
+    }
+
+    .vault-main {
+        padding-top: 3.5rem; /* clear the hamburger button */
+    }
+
+    .vault-content {
+        padding: 1.25rem 1rem;
+        max-width: 100%;
+    }
+
+    /* Tables scroll horizontally on narrow screens */
+    .vault-table-wrapper {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Modal fills more of the screen on mobile */
+    .vault-modal {
+        max-height: 95vh;
+        margin: 0 0.5rem;
+    }
+
+    /* Toast anchored at bottom-centre on very narrow screens */
+    .vault-toast-container {
+        left: 0.75rem;
+        right: 0.75rem;
+        bottom: 1rem;
+        max-width: 100%;
+        width: auto;
+    }
+
+    /* Insurance card grid single column */
+    .vault-insurance-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Metric cards grid tighter */
+    .vault-dash-metrics {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+
+    /* Insight CTAs wrap below content on mobile */
+    .vault-dash-insight {
+        flex-wrap: wrap;
+    }
+
+    .vault-btn--insight-cta {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+/* =========================================================
+   Focus-visible global improvements (accessibility)
+   ========================================================= */
+:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Remove default outline only when :focus-visible is supported */
+:focus:not(:focus-visible) {
+    outline: none;
+}

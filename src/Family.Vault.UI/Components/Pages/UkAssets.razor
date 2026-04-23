@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject IUkAssetsApiClient UkAssetsApiClient
 @inject ILogger<UkAssets> Logger
+@inject ToastService Toast
 
 <PageTitle>UK Assets – Family Vault</PageTitle>
 
@@ -10,7 +11,7 @@
 
 @if (_isLoading)
 {
-    <p class="vault-loading" role="status">Loading assets…</p>
+    <LoadingSpinner Label="Loading assets…" />
 }
 else
 {

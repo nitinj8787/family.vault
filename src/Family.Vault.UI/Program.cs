@@ -38,6 +38,9 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpContextAccessor();
 
+// Toast notification service – scoped so each circuit gets its own instance.
+builder.Services.AddScoped<ToastService>();
+
 // ---------------------------------------------------------------------------
 // Token provider – selectable via VaultApi:UseAzureAdAuth (default: false).
 //

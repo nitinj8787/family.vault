@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject IEmergencyFundApiClient EmergencyFundApiClient
 @inject ILogger<EmergencyFund> Logger
+@inject ToastService Toast
 
 <PageTitle>Emergency Fund – Family Vault</PageTitle>
 
@@ -11,7 +12,7 @@
 
 @if (_isLoading)
 {
-    <p class="vault-loading" role="status">Loading emergency fund…</p>
+    <LoadingSpinner Label="Loading emergency fund…" />
 }
 else
 {
