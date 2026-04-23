@@ -1,6 +1,8 @@
 using Family.Vault.Application.Abstractions;
+using Family.Vault.Application.Configuration;
 using Family.Vault.Application.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Family.Vault.Application.Services;
 
@@ -18,8 +20,12 @@ public sealed class InsightService(
     IInsuranceService insuranceService,
     IEmergencyFundService emergencyFundService,
     IDocumentService documentService,
+    IOptions<ReadinessScoreOptions> scoreOptions,
     ILogger<InsightService> logger) : IInsightService
 {
+    private readonly decimal _minimumRecommendedEmergencyFund =
+        scoreOptions.Value.MinimumRecommendedEmergencyFund;
+
     /// <summary>
     /// Policies expiring within this many days trigger an insight.
     /// </summary>
@@ -29,12 +35,6 @@ public sealed class InsightService(
     /// Policies expiring within this many days are elevated to <see cref="InsightSeverity.High"/>.
     /// </summary>
     private const int ExpiringInsuranceCriticalDays = 7;
-
-    /// <summary>
-    /// Emergency-fund total below this amount (in the user's stored currency)
-    /// is flagged as a medium-severity gap.
-    /// </summary>
-    private const decimal MinimumRecommendedEmergencyFund = 1_000m;
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<InsightResponse>> GetInsightsAsync(
@@ -66,7 +66,7 @@ public sealed class InsightService(
 
         DetectMissingNominees(bankAccounts, ukAssets, indiaAssets, investments, insurance, insights);
         DetectNoWill(wills, insights);
-        DetectLowEmergencyFund(emergencyFund, insights);
+        DetectLowEmergencyFund(emergencyFund, _minimumRecommendedEmergencyFund, insights);
         DetectExpiringInsurance(insurance, insights);
         DetectAssetsWithoutDocuments(ukAssets, indiaAssets, investments, insurance, bankAccounts, documents, insights);
 
@@ -149,6 +149,7 @@ public sealed class InsightService(
 
     private static void DetectLowEmergencyFund(
         IReadOnlyList<EmergencyFundResponse> emergencyFund,
+        decimal minimumRecommended,
         List<InsightResponse> insights)
     {
         if (emergencyFund.Count == 0)
@@ -171,10 +172,10 @@ public sealed class InsightService(
                 SuggestedAction:
                     "Update your emergency fund entries to reflect the actual amount available."));
         }
-        else if (total < MinimumRecommendedEmergencyFund)
+        else if (total < minimumRecommended)
         {
             insights.Add(new InsightResponse(
-                Title: $"Emergency fund is below the recommended minimum ({MinimumRecommendedEmergencyFund:N0})",
+                Title: $"Emergency fund is below the recommended minimum ({minimumRecommended:N0})",
                 Severity: InsightSeverity.Medium,
                 SuggestedAction:
                     "Consider building up your emergency fund to cover at least 3–6 months of essential expenses."));

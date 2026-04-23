@@ -61,14 +61,23 @@ public sealed class ReadinessScoreService(
 
         // Guard against a misconfigured all-zero weight set.
         if (totalRawWeight <= 0)
+        {
+            logger.LogWarning(
+                "ReadinessScoreOptions has all-zero weights (NomineesWeight={N}, EmergencyFundWeight={E}, " +
+                "WillsWeight={W}, DocumentsWeight={D}). Falling back to equal 25/25/25/25 distribution. " +
+                "Please review the ReadinessScore configuration section.",
+                _options.NomineesWeight, _options.EmergencyFundWeight,
+                _options.WillsWeight, _options.DocumentsWeight);
             totalRawWeight = 100;
+        }
 
         double scale = 100.0 / totalRawWeight;
 
         int nomineesMax      = (int)Math.Round(_options.NomineesWeight      * scale);
         int emergencyFundMax = (int)Math.Round(_options.EmergencyFundWeight * scale);
         int willsMax         = (int)Math.Round(_options.WillsWeight         * scale);
-        int documentsMax     = 100 - nomineesMax - emergencyFundMax - willsMax; // absorb rounding remainder
+        // Absorb rounding remainder; clamp to non-negative.
+        int documentsMax     = Math.Max(0, 100 - nomineesMax - emergencyFundMax - willsMax);
 
         var nomineesCategory      = ScoreNominees(ukAssets, indiaAssets, bankAccounts, investments, insurance, nomineesMax);
         var emergencyFundCategory = ScoreEmergencyFund(emergencyFund, emergencyFundMax);

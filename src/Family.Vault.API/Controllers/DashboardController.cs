@@ -40,6 +40,9 @@ public sealed class DashboardController(
     public async Task<IActionResult> GetInsights(CancellationToken cancellationToken)
     {
         var userId = GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
         var insights = await insightService.GetInsightsAsync(userId, cancellationToken);
 
         logger.LogInformation(
@@ -70,6 +73,9 @@ public sealed class DashboardController(
     public async Task<IActionResult> GetScore(CancellationToken cancellationToken)
     {
         var userId = GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
         var score = await readinessScoreService.GetScoreAsync(userId, cancellationToken);
 
         logger.LogInformation(
@@ -82,10 +88,14 @@ public sealed class DashboardController(
     // Private helpers
     // -----------------------------------------------------------------
 
-    private string GetUserId() =>
+    /// <summary>
+    /// Resolves the user identifier from standard OIDC/Azure AD claims.
+    /// Returns <c>null</c> if no recognisable identity claim is present;
+    /// callers must respond with 401 in that case.
+    /// </summary>
+    private string? GetUserId() =>
         User.FindFirst("oid")?.Value
         ?? User.FindFirst("sub")?.Value
-        ?? User.Identity?.Name
-        ?? "default";
+        ?? User.Identity?.Name;
 }
 
