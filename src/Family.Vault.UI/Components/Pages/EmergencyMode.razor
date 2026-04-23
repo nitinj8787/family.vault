@@ -1,6 +1,7 @@
 @page "/emergency"
 @attribute [Authorize]
 @rendermode InteractiveServer
+@using System.Globalization
 @inject IProfileApiClient ProfileApiClient
 @inject IBankAccountsApiClient BankAccountsApiClient
 @inject IEmergencyFundApiClient EmergencyFundApiClient
@@ -338,7 +339,7 @@
     };
 
     private static string FormatAmount(decimal amount) =>
-        amount.ToString("N2");
+        amount.ToString("N2", CultureInfo.CurrentCulture);
 
     private static string FormatSize(long bytes) => bytes switch
     {

@@ -29,8 +29,16 @@ public static class AuthorizationPolicies
     /// </summary>
     public const string LimitedEditor = "LimitedEditor";
 
-    // Legacy policy names preserved for compatibility.
+    /// <summary>
+    /// Alias for <see cref="FullAccess"/>. Kept for backwards-compatibility with existing
+    /// <c>[Authorize]</c> callsites. Prefer <see cref="FullAccess"/> for new code.
+    /// </summary>
     public const string FamilyMember = FullAccess;
+
+    /// <summary>
+    /// Alias for <see cref="FamilyAssetReader"/>. Kept for backwards-compatibility with existing
+    /// <c>[Authorize]</c> callsites. Prefer <see cref="FamilyAssetReader"/> for new code.
+    /// </summary>
     public const string VaultReader = FamilyAssetReader;
 
     /// <summary>
