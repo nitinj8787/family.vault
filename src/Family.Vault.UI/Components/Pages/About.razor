@@ -1,0 +1,385 @@
+@page "/about"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>About – Family Vault</PageTitle>
+
+<h1>About Family Vault</h1>
+<p class="vault-page-subtitle">
+    Your private, secure hub for managing your family's financial life — across borders, across generations.
+</p>
+
+@* ── Hero banner ── *@
+<div class="vault-about-hero">
+    <div class="vault-about-hero__icon" aria-hidden="true">🔒</div>
+    <div class="vault-about-hero__body">
+        <h2 class="vault-about-hero__title">One place. Everything your family needs.</h2>
+        <p class="vault-about-hero__text">
+            Family Vault brings together your assets, documents, insurance policies, nominees, tax records,
+            and estate planning into a single, always-available platform — so that the people you love are
+            never left in the dark when it matters most.
+        </p>
+    </div>
+</div>
+
+@* ── Why use it ── *@
+<h2 class="vault-about-section-heading">Why use Family Vault?</h2>
+
+<div class="vault-about-reasons">
+
+    <div class="vault-about-reason">
+        <span class="vault-about-reason__icon" aria-hidden="true">🛡️</span>
+        <div>
+            <h3 class="vault-about-reason__title">Protect what matters most</h3>
+            <p class="vault-about-reason__text">
+                Accidents and illness do not announce themselves. Family Vault ensures that your spouse,
+                children, or nominated contacts can instantly find account numbers, policy details, and
+                emergency contacts — reducing panic and legal delays at the worst possible time.
+            </p>
+        </div>
+    </div>
+
+    <div class="vault-about-reason">
+        <span class="vault-about-reason__icon" aria-hidden="true">🌏</span>
+        <div>
+            <h3 class="vault-about-reason__title">Multi-jurisdiction asset tracking</h3>
+            <p class="vault-about-reason__text">
+                Built for families with ties to both the <strong>UK</strong> and <strong>India</strong>.
+                Track UK savings accounts, ISAs, and pensions alongside Indian NRE/NRO accounts,
+                mutual funds, and property — all in one dashboard, with the right currency and
+                tax context for each country.
+            </p>
+        </div>
+    </div>
+
+    <div class="vault-about-reason">
+        <span class="vault-about-reason__icon" aria-hidden="true">📊</span>
+        <div>
+            <h3 class="vault-about-reason__title">Know your readiness score</h3>
+            <p class="vault-about-reason__text">
+                The <strong>Family Readiness Score</strong> gives you a 0–100 rating based on whether you have
+                nominees registered, wills in place, an emergency fund, and key documents uploaded.
+                It tells you exactly where your gaps are and what to fix first.
+            </p>
+        </div>
+    </div>
+
+    <div class="vault-about-reason">
+        <span class="vault-about-reason__icon" aria-hidden="true">🚨</span>
+        <div>
+            <h3 class="vault-about-reason__title">Emergency Mode for trusted people</h3>
+            <p class="vault-about-reason__text">
+                Emergency Mode presents a concise, read-only summary of critical information — account
+                locations, insurance contacts, will executors, and nominee details — designed for a
+                trusted family member or solicitor who needs fast access during a crisis.
+            </p>
+        </div>
+    </div>
+
+    <div class="vault-about-reason">
+        <span class="vault-about-reason__icon" aria-hidden="true">💡</span>
+        <div>
+            <h3 class="vault-about-reason__title">Smart, actionable insights</h3>
+            <p class="vault-about-reason__text">
+                The dashboard analyses your data and highlights real risks: insurance policies without a
+                named beneficiary, assets held in repatriation-restricted accounts, income sources that
+                may not be declared in the right jurisdiction, and more.
+            </p>
+        </div>
+    </div>
+
+    <div class="vault-about-reason">
+        <span class="vault-about-reason__icon" aria-hidden="true">🔐</span>
+        <div>
+            <h3 class="vault-about-reason__title">Secure by design</h3>
+            <p class="vault-about-reason__text">
+                Access is controlled by your organisation's <strong>Microsoft Entra ID (Azure AD)</strong>
+                identity — the same login you already trust. Role-based policies ensure that family
+                members only see what they are authorised to see, and all data is stored in Azure
+                with encryption at rest and in transit.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+@* ── How to use it ── *@
+<h2 class="vault-about-section-heading">How to use Family Vault</h2>
+<p class="vault-page-subtitle">Work through the sections below in roughly this order when you first get started.</p>
+
+<div class="vault-about-steps">
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">1</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">👤</span> Set up My Profile
+            </h3>
+            <p class="vault-about-step__text">
+                Navigate to <strong>My Profile</strong> and fill in your personal details, date of birth,
+                address, and spouse or partner information. Add your children and emergency contacts here too.
+                This information is used to populate nominee records and Emergency Mode.
+            </p>
+            <NavLink href="/profile" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Go to My Profile →
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">2</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🏦</span> Add your UK &amp; India assets
+            </h3>
+            <p class="vault-about-step__text">
+                Use <strong>UK Assets</strong> to record savings accounts, ISAs, cash, and pensions held in
+                the United Kingdom. Use <strong>India Assets</strong> to record NRE/NRO accounts, fixed
+                deposits, mutual funds, PPF, and other Indian holdings — including repatriation status and
+                tax residency implications.
+            </p>
+            <div class="vault-about-step__links">
+                <NavLink href="/uk-assets" class="vault-btn vault-btn--secondary vault-btn--sm">UK Assets →</NavLink>
+                <NavLink href="/india-assets" class="vault-btn vault-btn--secondary vault-btn--sm">India Assets →</NavLink>
+            </div>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">3</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🏛</span> Record Bank Accounts &amp; Investments
+            </h3>
+            <p class="vault-about-step__text">
+                <strong>Bank Accounts</strong> lets you register every current, savings, salary, or fixed-deposit
+                account with its institution, masked account number, and country. <strong>Investments</strong>
+                covers stocks, mutual funds, pensions, and crypto — giving you a portfolio summary by type.
+            </p>
+            <div class="vault-about-step__links">
+                <NavLink href="/bank-accounts" class="vault-btn vault-btn--secondary vault-btn--sm">Bank Accounts →</NavLink>
+                <NavLink href="/investments" class="vault-btn vault-btn--secondary vault-btn--sm">Investments →</NavLink>
+            </div>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">4</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🛡️</span> Add Insurance Policies
+            </h3>
+            <p class="vault-about-step__text">
+                Record every life, health, critical illness, and income-protection policy under
+                <strong>Insurance</strong>. The app will warn you whenever a policy has no named nominee — a
+                common oversight that can delay pay-outs significantly. Keep renewal dates here so nothing
+                lapses unnoticed.
+            </p>
+            <NavLink href="/insurance" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Go to Insurance →
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">5</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🏠</span> Track Property &amp; Loans
+            </h3>
+            <p class="vault-about-step__text">
+                Use <strong>Property &amp; Loans</strong> to register residential or commercial properties in the
+                UK or India, along with any outstanding mortgages or loans linked to each one. Rows with
+                an active loan are highlighted so you and your family can see liabilities at a glance.
+            </p>
+            <NavLink href="/properties" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Go to Property &amp; Loans →
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">6</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🚨</span> Build your Emergency Fund
+            </h3>
+            <p class="vault-about-step__text">
+                <strong>Emergency Fund</strong> lets you log where your liquid reserves are held and in what
+                currency. Enter your estimated monthly household expenses and the app tells you how many
+                months of cover you have — with clear good / warning / low indicators. The recommended
+                minimum is 3–6 months of expenses.
+            </p>
+            <NavLink href="/emergency-fund" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Go to Emergency Fund →
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">7</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🧾</span> Register Nominees
+            </h3>
+            <p class="vault-about-step__text">
+                <strong>Nominees</strong> is the most critical section for family protection. For every major
+                asset — bank account, insurance policy, pension, investment — record who the legal nominee
+                is. The Dashboard will flag any asset type that is missing a nominee so you can close
+                the gap quickly.
+            </p>
+            <NavLink href="/nominees" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Go to Nominees →
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">8</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🧮</span> Summarise your Tax Position
+            </h3>
+            <p class="vault-about-step__text">
+                <strong>Tax Summary</strong> lets you record income sources, the amounts involved, and
+                whether each has been declared to the relevant tax authority (HMRC or IT Department of India).
+                Undeclared entries are highlighted in amber so you always know your compliance status.
+            </p>
+            <NavLink href="/tax-summary" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Go to Tax Summary →
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">9</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">⚖️</span> Record Wills &amp; Legal Documents
+            </h3>
+            <p class="vault-about-step__text">
+                Under <strong>Wills &amp; Legal</strong>, record whether a valid will exists for each
+                jurisdiction you hold assets in (UK and/or India), where the original is stored, who
+                the executor is, and the name of your solicitor. The app displays a prominent critical
+                banner for any jurisdiction where no will is recorded — because dying intestate can
+                cost your family years and thousands in legal fees.
+            </p>
+            <NavLink href="/wills-legal" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Go to Wills &amp; Legal →
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">10</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">📁</span> Upload Documents
+            </h3>
+            <p class="vault-about-step__text">
+                Use <strong>Upload</strong> to attach scanned copies of passports, wills, property deeds,
+                insurance certificates, and any other important papers. Documents are stored securely in
+                Azure Blob Storage and can be browsed and downloaded from <strong>My Documents</strong>.
+                Supported formats: PDF, PNG, JPG, JPEG, DOCX, TXT (up to 20 MB each).
+            </p>
+            <div class="vault-about-step__links">
+                <NavLink href="/upload" class="vault-btn vault-btn--secondary vault-btn--sm">Upload a document →</NavLink>
+                <NavLink href="/documents" class="vault-btn vault-btn--secondary vault-btn--sm">My Documents →</NavLink>
+            </div>
+        </div>
+    </div>
+
+    <div class="vault-about-step">
+        <div class="vault-about-step__number" aria-hidden="true">11</div>
+        <div class="vault-about-step__body">
+            <h3 class="vault-about-step__title">
+                <span aria-hidden="true">🆘</span> Review Emergency Mode
+            </h3>
+            <p class="vault-about-step__text">
+                Once your data is populated, open <strong>Emergency Mode</strong> and review what a trusted
+                family member would see in a crisis. This read-only view surfaces the most important
+                information — bank locations, insurance contacts, will executors, and emergency
+                fund sources — without exposing sensitive figures unnecessarily.
+                Share the URL with a spouse or trusted contact so they know it exists.
+            </p>
+            <NavLink href="/emergency" class="vault-btn vault-btn--secondary vault-btn--sm">
+                Preview Emergency Mode →
+            </NavLink>
+        </div>
+    </div>
+
+</div>
+
+@* ── Readiness score breakdown ── *@
+<h2 class="vault-about-section-heading">Understanding your Readiness Score</h2>
+
+<div class="vault-about-score-breakdown">
+    <p class="vault-page-subtitle">
+        The score is calculated from four equally-weighted pillars (25 points each).
+        A score of 80 or above is considered <strong>good</strong>. 50–79 is a <strong>warning</strong>.
+        Below 50 needs <strong>urgent attention</strong>.
+    </p>
+    <div class="vault-about-pillars">
+        <div class="vault-about-pillar vault-about-pillar--nominees">
+            <span class="vault-about-pillar__icon" aria-hidden="true">🧾</span>
+            <span class="vault-about-pillar__label">Nominees</span>
+            <span class="vault-about-pillar__points">25 pts</span>
+            <p class="vault-about-pillar__hint">At least one nominee registered across your assets.</p>
+        </div>
+        <div class="vault-about-pillar vault-about-pillar--emergency">
+            <span class="vault-about-pillar__icon" aria-hidden="true">🚨</span>
+            <span class="vault-about-pillar__label">Emergency Fund</span>
+            <span class="vault-about-pillar__points">25 pts</span>
+            <p class="vault-about-pillar__hint">At least £1,000 (or equivalent) in accessible liquid savings.</p>
+        </div>
+        <div class="vault-about-pillar vault-about-pillar--wills">
+            <span class="vault-about-pillar__icon" aria-hidden="true">⚖️</span>
+            <span class="vault-about-pillar__label">Wills</span>
+            <span class="vault-about-pillar__points">25 pts</span>
+            <p class="vault-about-pillar__hint">A valid will recorded for every jurisdiction you hold assets in.</p>
+        </div>
+        <div class="vault-about-pillar vault-about-pillar--documents">
+            <span class="vault-about-pillar__icon" aria-hidden="true">📁</span>
+            <span class="vault-about-pillar__label">Documents</span>
+            <span class="vault-about-pillar__points">25 pts</span>
+            <p class="vault-about-pillar__hint">At least one document uploaded to the vault.</p>
+        </div>
+    </div>
+</div>
+
+@* ── Quick tips ── *@
+<h2 class="vault-about-section-heading">Tips for getting the most out of Family Vault</h2>
+
+<ul class="vault-about-tips">
+    <li>
+        <span aria-hidden="true">✅</span>
+        <strong>Start with the Dashboard.</strong> The Readiness Score and Smart Insights tell you exactly
+        what to tackle first — use them as your to-do list.
+    </li>
+    <li>
+        <span aria-hidden="true">🔄</span>
+        <strong>Review annually.</strong> Set a reminder every year to update insurance renewal dates,
+        nominee details, and your emergency fund balance. Life changes — your vault should too.
+    </li>
+    <li>
+        <span aria-hidden="true">📄</span>
+        <strong>Upload originals or certified copies.</strong> A scanned will or insurance certificate
+        stored here is accessible from anywhere, even if the physical copy is lost in a fire or flood.
+    </li>
+    <li>
+        <span aria-hidden="true">👨‍👩‍👧</span>
+        <strong>Tell your family it exists.</strong> Emergency Mode is only useful if a trusted person
+        knows to look here. Make sure your spouse or a close family member has access and knows the URL.
+    </li>
+    <li>
+        <span aria-hidden="true">🏴󠁧󠁢󠁳󠁣󠁴󠁿</span>
+        <strong>Don't forget India assets.</strong> Many NRI families discover after a bereavement that
+        funds are locked in NRO accounts due to missing nominations or expired tax clearances.
+        Record these assets and their nominees now.
+    </li>
+    <li>
+        <span aria-hidden="true">⚠️</span>
+        <strong>Act on critical banners immediately.</strong> A missing-will or missing-nominee banner
+        is not a cosmetic warning — it signals a real legal risk. Treat these as urgent actions.
+    </li>
+</ul>

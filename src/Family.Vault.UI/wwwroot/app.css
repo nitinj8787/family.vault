@@ -2854,3 +2854,239 @@ a:hover {
 :focus:not(:focus-visible) {
     outline: none;
 }
+
+/* ---------------------------------------------------------
+   About Page
+   --------------------------------------------------------- */
+
+/* Hero banner */
+.vault-about-hero {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-md);
+    padding: 1.75rem 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.vault-about-hero__icon {
+    font-size: 2.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vault-about-hero__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: var(--color-text);
+}
+
+.vault-about-hero__text {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-muted);
+    line-height: 1.65;
+}
+
+/* Section headings */
+.vault-about-section-heading {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+    color: var(--color-text);
+}
+
+/* Reasons grid (why use it) */
+.vault-about-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.vault-about-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.vault-about-reason__icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.vault-about-reason__title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+    color: var(--color-text);
+}
+
+.vault-about-reason__text {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+}
+
+/* Numbered steps (how to use it) */
+.vault-about-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.vault-about-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.vault-about-step__number {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    background-color: var(--color-accent);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.15rem;
+    line-height: 1;
+}
+
+.vault-about-step__body {
+    flex: 1;
+}
+
+.vault-about-step__title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.vault-about-step__text {
+    margin: 0 0 0.85rem;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+}
+
+.vault-about-step__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Readiness score pillars */
+.vault-about-score-breakdown {
+    margin-bottom: 0.5rem;
+}
+
+.vault-about-pillars {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.vault-about-pillar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.vault-about-pillar--nominees  { border-top: 3px solid #7c3aed; }
+.vault-about-pillar--emergency { border-top: 3px solid #dc2626; }
+.vault-about-pillar--wills     { border-top: 3px solid #0369a1; }
+.vault-about-pillar--documents { border-top: 3px solid #16a34a; }
+
+.vault-about-pillar__icon {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.vault-about-pillar__label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.vault-about-pillar__points {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+.vault-about-pillar__hint {
+    margin: 0.2rem 0 0;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    line-height: 1.4;
+}
+
+/* Tips list */
+.vault-about-tips {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.vault-about-tips li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1.25rem;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+}
+
+.vault-about-tips li > span:first-child {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+.vault-about-tips li strong {
+    color: var(--color-text);
+}
