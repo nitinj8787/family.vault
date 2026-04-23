@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject INomineeApiClient NomineeApiClient
 @inject ILogger<NomineeManager> Logger
+@inject ToastService Toast
 
 <PageTitle>Nominee Manager – Family Vault</PageTitle>
 
@@ -11,7 +12,7 @@
 
 @if (_isLoading)
 {
-    <p class="vault-loading" role="status">Loading nominees…</p>
+    <LoadingSpinner Label="Loading nominees…" />
 }
 else
 {

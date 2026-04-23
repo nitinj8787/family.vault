@@ -252,9 +252,10 @@ CREATE TABLE IF NOT EXISTS WillEntries (
 CREATE TABLE IF NOT EXISTS Documents (
     Id TEXT PRIMARY KEY,
     UserId TEXT NOT NULL,
-    FileName TEXT,
-    Category TEXT,
-    BlobUrl TEXT,
+    FileName TEXT NOT NULL,
+    Category TEXT NOT NULL,
+    Description TEXT NOT NULL DEFAULT '',
+    StoragePath TEXT NOT NULL,
     FileSize INTEGER,
     UploadedAt TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(UserId) REFERENCES Users(Id) ON DELETE CASCADE

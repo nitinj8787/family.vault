@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject IWillsApiClient WillsApiClient
 @inject ILogger<WillsLegal> Logger
+@inject ToastService Toast
 
 <PageTitle>Wills &amp; Legal – Family Vault</PageTitle>
 
@@ -13,7 +14,7 @@
 
 @if (_isLoading)
 {
-    <p class="vault-loading" role="status">Loading wills &amp; legal entries…</p>
+    <LoadingSpinner Label="Loading wills &amp; legal entries…" />
 }
 else
 {

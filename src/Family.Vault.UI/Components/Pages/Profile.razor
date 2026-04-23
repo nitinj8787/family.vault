@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject IProfileApiClient ProfileApiClient
 @inject ILogger<Profile> Logger
+@inject ToastService Toast
 
 <PageTitle>My Profile – Family Vault</PageTitle>
 
@@ -10,7 +11,7 @@
 
 @if (_isLoading)
 {
-    <p class="vault-loading" role="status">Loading profile…</p>
+    <LoadingSpinner Label="Loading profile…" />
 }
 else
 {

@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using System.Data;
 
 namespace Family.Vault.Infrastructure.Database;
 
@@ -31,6 +32,7 @@ public static class DatabaseInitializer
         // Execute the full schema script.  Each statement is separated by the
         // semicolon that ends it; Dapper handles multi-statement execution.
         await connection.ExecuteAsync(sql);
+        await EnsureDocumentColumnsAsync(connection);
 
         logger.LogInformation("SQLite database schema initialized successfully.");
     }
@@ -51,5 +53,22 @@ public static class DatabaseInitializer
 
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
+    }
+
+    private static async Task EnsureDocumentColumnsAsync(IDbConnection connection)
+    {
+        var existingColumns = (await connection.QueryAsync<string>(
+            "SELECT name FROM pragma_table_info('Documents');"))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (!existingColumns.Contains("Description"))
+        {
+            await connection.ExecuteAsync("ALTER TABLE Documents ADD COLUMN Description TEXT NOT NULL DEFAULT '';");
+        }
+
+        if (!existingColumns.Contains("StoragePath"))
+        {
+            await connection.ExecuteAsync("ALTER TABLE Documents ADD COLUMN StoragePath TEXT NOT NULL DEFAULT '';");
+        }
     }
 }

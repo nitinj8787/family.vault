@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject ITaxApiClient TaxApiClient
 @inject ILogger<TaxSummary> Logger
+@inject ToastService Toast
 
 <PageTitle>Tax Summary – Family Vault</PageTitle>
 
@@ -11,7 +12,7 @@
 
 @if (_isLoading)
 {
-    <p class="vault-loading" role="status">Loading tax entries…</p>
+    <LoadingSpinner Label="Loading tax entries…" />
 }
 else
 {

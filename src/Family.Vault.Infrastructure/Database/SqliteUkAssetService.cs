@@ -14,7 +14,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// joined with a row in <c>UkAssets</c>.
 /// </summary>
 public sealed class SqliteUkAssetService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteUkAssetService> logger) : IUkAssetService
 {
     private const string AssetType = "UkAsset";
@@ -24,7 +24,7 @@ public sealed class SqliteUkAssetService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<UkAssetRow>(
             """
             SELECT a.Id, a.Provider, ua.Category, ua.AccountNumber, ua.Nominee, ua.TaxNotes
@@ -47,8 +47,7 @@ public sealed class SqliteUkAssetService(
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         using var tx = conn.BeginTransaction();
 
         await conn.ExecuteAsync(
@@ -98,9 +97,8 @@ public sealed class SqliteUkAssetService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+        
         var exists = await conn.ExecuteScalarAsync<int>(
             "SELECT COUNT(1) FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
             new { Id = id.ToString(), UserId = userId, AssetType });
@@ -156,7 +154,7 @@ public sealed class SqliteUkAssetService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             "DELETE FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
             new { Id = id.ToString(), UserId = userId, AssetType });

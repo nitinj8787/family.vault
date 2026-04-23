@@ -12,7 +12,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// SQLite-backed implementation of <see cref="INomineeService"/>.
 /// </summary>
 public sealed class SqliteNomineeService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteNomineeService> logger) : INomineeService
 {
     /// <inheritdoc/>
@@ -20,7 +20,7 @@ public sealed class SqliteNomineeService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<NomineeRow>(
             "SELECT Id, AssetType, ContactDetails, Name, Relationship FROM Nominees WHERE UserId = @UserId",
             new { UserId = userId });
@@ -38,7 +38,7 @@ public sealed class SqliteNomineeService(
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         await conn.ExecuteAsync(
             """
             INSERT INTO Nominees (Id, UserId, AssetType, ContactDetails, Name, Relationship)
@@ -75,7 +75,7 @@ public sealed class SqliteNomineeService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             """
             UPDATE Nominees
@@ -118,7 +118,7 @@ public sealed class SqliteNomineeService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             "DELETE FROM Nominees WHERE Id = @Id AND UserId = @UserId",
             new { Id = id.ToString(), UserId = userId });

@@ -1,0 +1,14 @@
+<div class="vault-empty-state">
+    <div class="vault-empty-state__icon" aria-hidden="true">@Icon</div>
+    <p class="vault-empty-state__title">@Title</p>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="vault-empty-state__message">@Message</p>
+    }
+</div>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "📭";
+    [Parameter] public string Title { get; set; } = "Nothing here yet";
+    [Parameter] public string Message { get; set; } = "";
+}

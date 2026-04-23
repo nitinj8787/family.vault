@@ -11,7 +11,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// SQLite-backed implementation of <see cref="IEmergencyFundService"/>.
 /// </summary>
 public sealed class SqliteEmergencyFundService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteEmergencyFundService> logger) : IEmergencyFundService
 {
     /// <inheritdoc/>
@@ -19,7 +19,7 @@ public sealed class SqliteEmergencyFundService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<EmergencyFundRow>(
             "SELECT Id, Location, Amount, AccessInstructions FROM EmergencyFunds WHERE UserId = @UserId",
             new { UserId = userId });
@@ -37,7 +37,7 @@ public sealed class SqliteEmergencyFundService(
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         await conn.ExecuteAsync(
             """
             INSERT INTO EmergencyFunds (Id, UserId, Location, Amount, AccessInstructions)
@@ -72,7 +72,7 @@ public sealed class SqliteEmergencyFundService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             """
             UPDATE EmergencyFunds
@@ -112,7 +112,7 @@ public sealed class SqliteEmergencyFundService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             "DELETE FROM EmergencyFunds WHERE Id = @Id AND UserId = @UserId",
             new { Id = id.ToString(), UserId = userId });

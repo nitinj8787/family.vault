@@ -1,0 +1,81 @@
+@inject ToastService ToastService
+@implements IDisposable
+
+@if (_toasts.Count > 0)
+{
+    <div class="vault-toast-container" aria-live="polite" aria-atomic="false">
+        @foreach (var toast in _toasts)
+        {
+            <div class="vault-toast vault-toast--@toast.Level.ToString().ToLowerInvariant()"
+                 role="status">
+                <span class="vault-toast__icon" aria-hidden="true">@GetIcon(toast.Level)</span>
+                <span class="vault-toast__text">@toast.Text</span>
+                <button class="vault-toast__close" @onclick="() => Remove(toast)" aria-label="Dismiss">✕</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private readonly List<ToastMessage> _toasts = [];
+    private readonly Dictionary<ToastMessage, System.Timers.Timer> _timers = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += HandleShow;
+    }
+
+    private void HandleShow(ToastMessage toast)
+    {
+        _ = InvokeAsync(() =>
+        {
+            _toasts.Add(toast);
+            StateHasChanged();
+
+            var timer = new System.Timers.Timer(toast.DurationMs);
+            timer.AutoReset = false;
+            timer.Elapsed += (_, _) =>
+            {
+                _ = InvokeAsync(() =>
+                {
+                    Remove(toast);
+                    StateHasChanged();
+                });
+            };
+            _timers[toast] = timer;
+            timer.Start();
+        });
+    }
+
+    private void Remove(ToastMessage toast)
+    {
+        if (_timers.TryGetValue(toast, out var timer))
+        {
+            timer.Stop();
+            timer.Dispose();
+            _timers.Remove(toast);
+        }
+
+        _toasts.Remove(toast);
+    }
+
+    private static string GetIcon(ToastLevel level) => level switch
+    {
+        ToastLevel.Success => "✓",
+        ToastLevel.Error   => "✕",
+        ToastLevel.Warning => "⚠",
+        _                  => "ℹ"
+    };
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= HandleShow;
+        foreach (var timer in _timers.Values)
+        {
+            timer.Stop();
+            timer.Dispose();
+        }
+
+        _timers.Clear();
+    }
+}

@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject IInvestmentsApiClient InvestmentsApiClient
 @inject ILogger<Investments> Logger
+@inject ToastService Toast
 
 <PageTitle>Investments – Family Vault</PageTitle>
 
@@ -11,7 +12,7 @@
 
 @if (_isLoading)
 {
-    <p class="vault-loading" role="status">Loading investments…</p>
+    <LoadingSpinner Label="Loading investments…" />
 }
 else
 {

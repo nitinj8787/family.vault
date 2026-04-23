@@ -1,3 +1,64 @@
+/* ---------------------------------------------------------
+   Hamburger button – visible only on mobile
+   --------------------------------------------------------- */
+.vault-nav__hamburger {
+    display: none;
+    position: fixed;
+    top: 0.85rem;
+    left: 0.85rem;
+    z-index: 1200;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 5px;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0.55rem 0.6rem;
+    background-color: var(--color-nav-bg);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.vault-nav__hamburger span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: #fff;
+    border-radius: 2px;
+    transition: transform 0.2s;
+}
+
+/* Backdrop for mobile – closes nav on tap */
+.vault-nav__backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    z-index: 1050;
+}
+
+/* Close button inside the nav – visible only on mobile */
+.vault-nav__close {
+    display: none;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    border-radius: var(--radius-sm);
+    margin-left: auto;
+    line-height: 1;
+}
+
+.vault-nav__close:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------------------------------------------------------
+   Sidebar nav – desktop default
+   --------------------------------------------------------- */
 .vault-nav {
     width: 220px;
     min-height: 100vh;
@@ -34,6 +95,7 @@
     margin: 0;
     padding: 0;
     flex: 1;
+    overflow-y: auto;
 }
 
 .vault-nav__links li {
@@ -96,4 +158,48 @@
     background-color: rgba(220, 38, 38, 0.2);
     border-left-color: #dc2626;
     color: #fecaca;
+}
+
+/* ---------------------------------------------------------
+   Mobile responsive – ≤ 768 px
+   --------------------------------------------------------- */
+@media (max-width: 768px) {
+    .vault-nav__hamburger {
+        display: flex;
+    }
+
+    .vault-nav__backdrop {
+        display: block;
+        /* shown only when nav is open */
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.2s, visibility 0.2s;
+    }
+
+    .vault-nav--open ~ .vault-nav__backdrop,
+    .vault-nav__backdrop {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .vault-nav__close {
+        display: block;
+    }
+
+    .vault-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1100;
+        width: 260px;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        min-height: unset;
+        height: 100%;
+    }
+
+    .vault-nav--open {
+        transform: translateX(0);
+    }
 }

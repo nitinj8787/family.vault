@@ -14,7 +14,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// joined with a row in <c>BankAccounts</c>.
 /// </summary>
 public sealed class SqliteBankAccountService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteBankAccountService> logger) : IBankAccountService
 {
     private const string AssetType = "Bank";
@@ -28,7 +28,7 @@ public sealed class SqliteBankAccountService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<BankAccountRow>(
             """
             SELECT a.Id, a.Name AS BankName, ba.AccountNumber, ba.AccountType, ba.Nominee
@@ -52,12 +52,11 @@ public sealed class SqliteBankAccountService(
         CancellationToken cancellationToken = default)
     {
         ValidateRequest(request);
-        await EnsureNoDuplicateAsync(userId, excludeId: null, request);
+        await EnsureNoDuplicateAsync(userId, excludeId: null, request, cancellationToken);
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         using var tx = conn.BeginTransaction();
 
         await conn.ExecuteAsync(
@@ -99,9 +98,8 @@ public sealed class SqliteBankAccountService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+        
         var exists = await conn.ExecuteScalarAsync<int>(
             "SELECT COUNT(1) FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
             new { Id = id.ToString(), UserId = userId, AssetType });
@@ -112,7 +110,7 @@ public sealed class SqliteBankAccountService(
             return null;
         }
 
-        await EnsureNoDuplicateAsync(userId, excludeId: id, request);
+        await EnsureNoDuplicateAsync(userId, excludeId: id, request, cancellationToken);
 
         using var tx = conn.BeginTransaction();
 
@@ -150,7 +148,7 @@ public sealed class SqliteBankAccountService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         // Deleting from Assets cascades to BankAccounts.
         var affected = await conn.ExecuteAsync(
             "DELETE FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
@@ -184,9 +182,13 @@ public sealed class SqliteBankAccountService(
             throw new BankAccountValidationException("Nominee name must not exceed 100 characters.");
     }
 
-    private async Task EnsureNoDuplicateAsync(string userId, Guid? excludeId, BankAccountRequest request)
+    private async Task EnsureNoDuplicateAsync(
+        string userId,
+        Guid? excludeId,
+        BankAccountRequest request,
+        CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var sql = excludeId is null
             ? """
               SELECT COUNT(1) FROM BankAccounts ba
