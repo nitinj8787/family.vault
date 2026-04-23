@@ -1,4 +1,5 @@
 using Family.Vault.Application.Abstractions;
+using Family.Vault.Application.Utilities;
 using Microsoft.Extensions.Logging;
 
 namespace Family.Vault.Infrastructure.Storage;
@@ -41,13 +42,15 @@ public sealed class LocalFileStorageService : IStorageService
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        _logger.LogInformation("LocalFileStorage: uploading {FileName} to {FilePath}", fileName, filePath);
+        _logger.LogInformation("LocalFileStorage: uploading {FileName} to {FilePath}",
+            LogSanitizer.Sanitize(fileName), LogSanitizer.Sanitize(filePath));
 
         await using var fileStream = new FileStream(
             filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
         await content.CopyToAsync(fileStream, cancellationToken);
 
-        _logger.LogInformation("LocalFileStorage: uploaded {FileName} successfully", fileName);
+        _logger.LogInformation("LocalFileStorage: uploaded {FileName} successfully",
+            LogSanitizer.Sanitize(fileName));
     }
 
     /// <inheritdoc/>
@@ -62,11 +65,13 @@ public sealed class LocalFileStorageService : IStorageService
 
         if (!File.Exists(filePath))
         {
-            _logger.LogWarning("LocalFileStorage: file {FileName} not found at {FilePath}", fileName, filePath);
+            _logger.LogWarning("LocalFileStorage: file {FileName} not found at {FilePath}",
+                LogSanitizer.Sanitize(fileName), LogSanitizer.Sanitize(filePath));
             throw new FileNotFoundException($"File '{fileName}' was not found in local storage.", fileName);
         }
 
-        _logger.LogInformation("LocalFileStorage: downloading {FileName} from {FilePath}", fileName, filePath);
+        _logger.LogInformation("LocalFileStorage: downloading {FileName} from {FilePath}",
+            LogSanitizer.Sanitize(fileName), LogSanitizer.Sanitize(filePath));
 
         await using var fileStream = new FileStream(
             filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
@@ -81,13 +86,31 @@ public sealed class LocalFileStorageService : IStorageService
 
         var files = Directory
             .GetFiles(_storagePath, "*", SearchOption.AllDirectories)
-            .Select(f => Path.GetRelativePath(_storagePath, f).Replace('\\', '/'))
+            .Select(f => Path.GetRelativePath(_storagePath, f).Replace(Path.DirectorySeparatorChar, '/'))
             .ToList();
 
         _logger.LogInformation("LocalFileStorage: listed {Count} file(s)", files.Count);
         return Task.FromResult<IReadOnlyCollection<string>>(files);
     }
 
-    private string GetFilePath(string fileName) =>
-        Path.Combine(_storagePath, fileName.Replace('/', Path.DirectorySeparatorChar));
+    private string GetFilePath(string fileName)
+    {
+        // Normalise any forward or back slashes into the OS directory separator,
+        // then combine with the storage root and resolve to an absolute path so that
+        // path-traversal attempts (e.g. "../secret") are collapsed safely.
+        var relative = fileName
+            .Replace('/', Path.DirectorySeparatorChar)
+            .Replace('\\', Path.DirectorySeparatorChar);
+        var combined = Path.GetFullPath(Path.Combine(_storagePath, relative));
+
+        // Guard against directory-traversal: the resolved path must stay inside _storagePath.
+        var root = Path.GetFullPath(_storagePath);
+        if (!combined.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            && !combined.Equals(root, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("File name resolves outside the storage root.", nameof(fileName));
+        }
+
+        return combined;
+    }
 }
