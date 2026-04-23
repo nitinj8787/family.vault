@@ -64,6 +64,7 @@ public sealed class DocumentService(
             userId,
             request.FileName,
             request.Category.ToString(),
+            request.Description,
             request.FileSizeBytes,
             storagePath,
             uploadedAt);
@@ -80,6 +81,7 @@ public sealed class DocumentService(
         return new DocumentUploadResponse(
             FileName: request.FileName,
             Category: request.Category,
+            Description: request.Description,
             FileSizeBytes: request.FileSizeBytes,
             StoragePath: storagePath,
             UploadedAtUtc: uploadedAt);
@@ -92,6 +94,36 @@ public sealed class DocumentService(
     {
         var docs = _metadataStore.Values
             .Where(m => m.UserId == userId)
+            .OrderByDescending(m => m.UploadedAtUtc)
+            .Select(MapToResponse)
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<DocumentMetadataResponse>>(docs);
+    }
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<DocumentMetadataResponse>> SearchAsync(
+        string userId,
+        string? category = null,
+        string? searchTerm = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _metadataStore.Values.Where(m => m.UserId == userId);
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(m =>
+                m.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(m =>
+                m.FileName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                || m.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var docs = query
             .OrderByDescending(m => m.UploadedAtUtc)
             .Select(MapToResponse)
             .ToList();
@@ -167,6 +199,7 @@ public sealed class DocumentService(
             Id: m.Id,
             FileName: m.FileName,
             Category: m.Category,
+            Description: m.Description,
             FileSizeBytes: m.FileSizeBytes,
             StoragePath: m.StoragePath,
             UploadedAtUtc: m.UploadedAtUtc);

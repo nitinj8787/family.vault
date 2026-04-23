@@ -13,5 +13,17 @@ public enum DocumentCategory
     India,
 
     /// <summary>Insurance policies and related documents.</summary>
-    Insurance
+    Insurance,
+
+    /// <summary>Legal documents (wills, power of attorney, contracts, etc.).</summary>
+    Legal,
+
+    /// <summary>Financial documents (bank statements, tax returns, investment records, etc.).</summary>
+    Financial,
+
+    /// <summary>Medical records and health-related documents.</summary>
+    Medical,
+
+    /// <summary>Documents that do not fit any other category.</summary>
+    Other
 }

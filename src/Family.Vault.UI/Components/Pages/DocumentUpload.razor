@@ -3,19 +3,35 @@
 @rendermode InteractiveServer
 @inject IVaultApiClient VaultApiClient
 @inject ILogger<DocumentUpload> Logger
+@inject NavigationManager Navigation
 
 <PageTitle>Upload Document – Family Vault</PageTitle>
 
 <h1>Upload Document</h1>
+<p class="vault-page-subtitle">Add a document to your Family Vault. Files are stored securely and accessible at any time.</p>
 
-<div class="vault-card">
+<div class="vault-card vault-card--wide">
     <div class="vault-form-field">
         <label class="vault-label" for="category">Category</label>
         <select id="category" class="vault-select" @bind="_selectedCategory">
-            <option value="Uk">UK</option>
-            <option value="India">India</option>
-            <option value="Insurance">Insurance</option>
+            <option value="Uk">🇬🇧 UK Documents</option>
+            <option value="India">🇮🇳 India Documents</option>
+            <option value="Insurance">🛡️ Insurance</option>
+            <option value="Legal">⚖️ Legal</option>
+            <option value="Financial">💳 Financial</option>
+            <option value="Medical">🏥 Medical</option>
+            <option value="Other">📁 Other</option>
         </select>
+    </div>
+
+    <div class="vault-form-field">
+        <label class="vault-label" for="description">Description <span class="vault-label--optional">(optional)</span></label>
+        <input id="description"
+               type="text"
+               class="vault-input"
+               placeholder="e.g. Passport – expires 2030, or NHS medical records"
+               maxlength="200"
+               @bind="_description" />
     </div>
 
     <div class="vault-form-field">
@@ -27,17 +43,22 @@
         @if (_selectedFile is not null)
         {
             <p class="vault-file-info">
-                <strong>@_selectedFile.Name</strong> (@FormatSize(_selectedFile.Size))
+                <span class="vault-file-info__icon">@GetFileIcon(Path.GetExtension(_selectedFile.Name))</span>
+                <strong>@_selectedFile.Name</strong>
+                <span class="vault-muted">(@FormatSize(_selectedFile.Size))</span>
             </p>
         }
     </div>
 
-    <button class="vault-btn vault-btn--primary"
-            @onclick="UploadAsync"
-            disabled="@(_selectedFile is null || _isUploading)"
-            aria-busy="@_isUploading">
-        @(_isUploading ? "Uploading…" : "Upload Document")
-    </button>
+    <div class="vault-upload-actions">
+        <button class="vault-btn vault-btn--primary"
+                @onclick="UploadAsync"
+                disabled="@(_selectedFile is null || _isUploading)"
+                aria-busy="@_isUploading">
+            @(_isUploading ? "Uploading…" : "⬆ Upload Document")
+        </button>
+        <a class="vault-btn vault-btn--secondary" href="/documents">View All Documents</a>
+    </div>
 </div>
 
 @if (_statusMessage is not null)
@@ -48,6 +69,7 @@
 @code {
     private IBrowserFile? _selectedFile;
     private string _selectedCategory = "Uk";
+    private string _description = string.Empty;
     private bool _isUploading;
     private string? _statusMessage;
     private StatusType _statusType = StatusType.Info;
@@ -83,11 +105,13 @@
                 _selectedFile.Name,
                 _selectedFile.Size,
                 stream,
-                _selectedCategory);
+                _selectedCategory,
+                _description);
 
-            _statusMessage = $"'{result.FileName}' uploaded successfully to {result.StoragePath}.";
+            _statusMessage = $"'{result.FileName}' uploaded successfully.";
             _statusType = StatusType.Success;
             _selectedFile = null;
+            _description = string.Empty;
         }
         catch (Exception ex)
         {
@@ -106,5 +130,14 @@
         < 1_024 => $"{bytes} B",
         < 1_048_576 => $"{bytes / 1_024.0:F1} KB",
         _ => $"{bytes / 1_048_576.0:F1} MB"
+    };
+
+    private static string GetFileIcon(string ext) => ext.ToLowerInvariant() switch
+    {
+        ".pdf"  => "📄",
+        ".png" or ".jpg" or ".jpeg" => "🖼️",
+        ".docx" => "📝",
+        ".txt"  => "📃",
+        _       => "📁"
     };
 }

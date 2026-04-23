@@ -1072,6 +1072,262 @@ a:hover {
     color: #166534;
 }
 
+.vault-doc-category--legal {
+    background-color: #ede9fe;
+    color: #5b21b6;
+}
+
+.vault-doc-category--financial {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.vault-doc-category--medical {
+    background-color: #fce7f3;
+    color: #9d174d;
+}
+
+.vault-doc-category--other {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+/* ---------------------------------------------------------
+   Document Vault – Toolbar (search + upload button)
+   --------------------------------------------------------- */
+
+.vault-docs-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.vault-docs-search {
+    position: relative;
+    flex: 1;
+}
+
+.vault-docs-search__icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    pointer-events: none;
+    user-select: none;
+}
+
+.vault-docs-search__input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+    transition: border-color 0.15s;
+}
+
+.vault-docs-search__input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ---------------------------------------------------------
+   Document Vault – Category filter pills
+   --------------------------------------------------------- */
+
+.vault-docs-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.vault-docs-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.vault-docs-filter-pill:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.vault-docs-filter-pill--active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+.vault-docs-filter-pill--active:hover {
+    background: var(--color-accent-hv);
+    border-color: var(--color-accent-hv);
+    color: #fff;
+}
+
+/* ---------------------------------------------------------
+   Document Vault – Section headings
+   --------------------------------------------------------- */
+
+.vault-docs-section {
+    margin-bottom: 2rem;
+}
+
+.vault-docs-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.85rem;
+}
+
+/* ---------------------------------------------------------
+   Document Vault – Card grid
+   --------------------------------------------------------- */
+
+.vault-docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.vault-docs-grid--recent {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+/* ---------------------------------------------------------
+   Document Vault – Individual card
+   --------------------------------------------------------- */
+
+.vault-doc-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.vault-doc-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: #cbd5e1;
+}
+
+.vault-doc-card--recent {
+    border-left: 3px solid var(--color-accent);
+}
+
+.vault-doc-card__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+}
+
+.vault-doc-card__icon {
+    font-size: 1.85rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vault-doc-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.vault-doc-card__name {
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text);
+}
+
+.vault-doc-card__desc {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    margin: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.vault-doc-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.78rem;
+}
+
+.vault-doc-card__size {
+    flex-shrink: 0;
+}
+
+.vault-doc-card__date {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vault-doc-card__download {
+    flex-shrink: 0;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+/* ---------------------------------------------------------
+   Document Upload – extras
+   --------------------------------------------------------- */
+
+.vault-label--optional {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--color-muted);
+}
+
+.vault-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+}
+
+.vault-file-info__icon {
+    font-size: 1.1rem;
+}
+
+.vault-upload-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
 /* ---------------------------------------------------------
    Nominee Manager
    --------------------------------------------------------- */

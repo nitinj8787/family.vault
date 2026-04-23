@@ -12,6 +12,7 @@ public sealed class DocumentMetadata
         string userId,
         string fileName,
         string category,
+        string description,
         long fileSizeBytes,
         string storagePath,
         DateTimeOffset uploadedAtUtc)
@@ -20,6 +21,7 @@ public sealed class DocumentMetadata
         UserId = userId;
         FileName = fileName;
         Category = category;
+        Description = description;
         FileSizeBytes = fileSizeBytes;
         StoragePath = storagePath;
         UploadedAtUtc = uploadedAtUtc;
@@ -31,6 +33,9 @@ public sealed class DocumentMetadata
 
     /// <summary>Category label (e.g. "uk", "india", "insurance").</summary>
     public string Category { get; }
+
+    /// <summary>Optional free-text description supplied by the user at upload time.</summary>
+    public string Description { get; }
 
     public long FileSizeBytes { get; }
 
