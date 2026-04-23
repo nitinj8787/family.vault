@@ -1,0 +1,359 @@
+@page "/emergency"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IProfileApiClient ProfileApiClient
+@inject IBankAccountsApiClient BankAccountsApiClient
+@inject IEmergencyFundApiClient EmergencyFundApiClient
+@inject IInsuranceApiClient InsuranceApiClient
+@inject IVaultApiClient VaultApiClient
+@inject ILogger<EmergencyMode> Logger
+@inject NavigationManager Navigation
+
+<PageTitle>Emergency Mode – Family Vault</PageTitle>
+
+<div class="em-page">
+
+    @* ── Header banner ── *@
+    <div class="em-header">
+        <div class="em-header__icon" aria-hidden="true">🚨</div>
+        <div class="em-header__text">
+            <h1 class="em-title">Emergency Mode</h1>
+            <p class="em-subtitle">Step-by-step guide for urgent situations</p>
+        </div>
+        <a href="/" class="em-exit" aria-label="Exit emergency mode">✕ Exit</a>
+    </div>
+
+    @* ── Step progress bar ── *@
+    <nav class="em-steps" aria-label="Emergency steps">
+        @for (int i = 1; i <= TotalSteps; i++)
+        {
+            var step = i;
+            var isActive  = step == _currentStep;
+            var isDone    = step < _currentStep;
+            var cssState  = isActive ? "active" : isDone ? "done" : "pending";
+            <button class="em-step em-step--@cssState"
+                    @onclick="() => GoToStep(step)"
+                    aria-current="@(isActive ? "step" : null)"
+                    aria-label="@StepLabel(step)">
+                <span class="em-step__number">@(isDone ? "✓" : step.ToString())</span>
+                <span class="em-step__label">@StepLabel(step)</span>
+            </button>
+        }
+    </nav>
+
+    @* ── Loading state ── *@
+    @if (_isLoading)
+    {
+        <p class="em-loading" role="status">Loading…</p>
+    }
+    else
+    {
+        @* ═══════════════════════════════════════════════════
+           STEP 1 – Who to contact
+           ═══════════════════════════════════════════════════ *@
+        @if (_currentStep == 1)
+        {
+            <div class="em-section">
+                <div class="em-section__header">
+                    <span class="em-section__icon" aria-hidden="true">📞</span>
+                    <h2 class="em-section__title">Who to contact first</h2>
+                </div>
+
+                @if (_profile?.EmergencyContacts is { Count: > 0 } contacts)
+                {
+                    <div class="em-contact-list">
+                        @foreach (var c in contacts)
+                        {
+                            <div class="em-contact-card">
+                                <div class="em-contact-card__avatar" aria-hidden="true">👤</div>
+                                <div class="em-contact-card__body">
+                                    <div class="em-contact-card__name">@c.Name</div>
+                                    <div class="em-contact-card__role">@c.Relationship</div>
+                                    <a href="tel:@c.PhoneNumber" class="em-contact-card__phone">
+                                        📱 @c.PhoneNumber
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="em-empty">No emergency contacts saved. <a href="/profile">Add contacts →</a></p>
+                }
+            </div>
+        }
+
+        @* ═══════════════════════════════════════════════════
+           STEP 2 – Access money
+           ═══════════════════════════════════════════════════ *@
+        @if (_currentStep == 2)
+        {
+            <div class="em-section">
+                <div class="em-section__header">
+                    <span class="em-section__icon" aria-hidden="true">💰</span>
+                    <h2 class="em-section__title">Access money</h2>
+                </div>
+
+                @* Emergency fund summary *@
+                @if (_emergencyFunds.Count > 0)
+                {
+                    <h3 class="em-subsection-title">🚨 Emergency fund</h3>
+                    <div class="em-money-list">
+                        @foreach (var fund in _emergencyFunds)
+                        {
+                            <div class="em-money-card em-money-card--fund">
+                                <div class="em-money-card__name">@fund.Location</div>
+                                <div class="em-money-card__amount">@FormatAmount(fund.Amount)</div>
+                                @if (!string.IsNullOrWhiteSpace(fund.AccessInstructions))
+                                {
+                                    <div class="em-money-card__hint">@fund.AccessInstructions</div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="em-total-banner">
+                        Total emergency fund:
+                        <strong>@FormatAmount(_emergencyFunds.Sum(f => f.Amount))</strong>
+                    </div>
+                }
+                else
+                {
+                    <p class="em-empty">No emergency fund entries. <a href="/emergency-fund">Add one →</a></p>
+                }
+
+                @* Bank accounts *@
+                @if (_bankAccounts.Count > 0)
+                {
+                    <h3 class="em-subsection-title">🏦 Bank accounts</h3>
+                    <div class="em-money-list">
+                        @foreach (var acct in _bankAccounts)
+                        {
+                            <div class="em-money-card">
+                                <div class="em-money-card__name">@acct.BankName</div>
+                                <div class="em-money-card__type">@AccountTypeLabel(acct.AccountType)</div>
+                                @if (!string.IsNullOrWhiteSpace(acct.Nominee))
+                                {
+                                    <div class="em-money-card__hint">Nominee: @acct.Nominee</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="em-empty">No bank accounts saved. <a href="/bank-accounts">Add one →</a></p>
+                }
+            </div>
+        }
+
+        @* ═══════════════════════════════════════════════════
+           STEP 3 – Important documents
+           ═══════════════════════════════════════════════════ *@
+        @if (_currentStep == 3)
+        {
+            <div class="em-section">
+                <div class="em-section__header">
+                    <span class="em-section__icon" aria-hidden="true">📄</span>
+                    <h2 class="em-section__title">Important documents</h2>
+                </div>
+
+                @if (_documents.Count > 0)
+                {
+                    <div class="em-doc-list">
+                        @foreach (var doc in _documents)
+                        {
+                            <div class="em-doc-card">
+                                <span class="em-doc-card__icon" aria-hidden="true">📎</span>
+                                <div class="em-doc-card__body">
+                                    <div class="em-doc-card__name">@doc.FileName</div>
+                                    <div class="em-doc-card__meta">@doc.Category · @FormatSize(doc.FileSizeBytes)</div>
+                                </div>
+                                <a href="/documents" class="em-doc-card__action">View →</a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="em-empty">No documents uploaded. <a href="/upload">Upload now →</a></p>
+                }
+            </div>
+        }
+
+        @* ═══════════════════════════════════════════════════
+           STEP 4 – Next steps
+           ═══════════════════════════════════════════════════ *@
+        @if (_currentStep == 4)
+        {
+            <div class="em-section">
+                <div class="em-section__header">
+                    <span class="em-section__icon" aria-hidden="true">📋</span>
+                    <h2 class="em-section__title">Next steps</h2>
+                </div>
+
+                @* Insurance *@
+                @if (_policies.Count > 0)
+                {
+                    <h3 class="em-subsection-title">🛡️ Insurance policies to notify</h3>
+                    <div class="em-insurance-list">
+                        @foreach (var policy in _policies)
+                        {
+                            <div class="em-insurance-card">
+                                <div class="em-insurance-card__provider">@policy.Provider</div>
+                                <div class="em-insurance-card__type">@policy.PolicyType</div>
+                                @if (!string.IsNullOrWhiteSpace(policy.ClaimContact))
+                                {
+                                    <div class="em-insurance-card__contact">
+                                        📞 Claim contact: <strong>@policy.ClaimContact</strong>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="em-empty">No insurance policies recorded. <a href="/insurance">Add one →</a></p>
+                }
+
+                @* Action checklist *@
+                <h3 class="em-subsection-title">✅ Action checklist</h3>
+                <ul class="em-checklist">
+                    <li>☎ Contact your emergency contacts (Step 1)</li>
+                    <li>💳 Access emergency fund and bank accounts (Step 2)</li>
+                    <li>📂 Locate identity and legal documents (Step 3)</li>
+                    <li>📝 Notify insurance providers</li>
+                    <li>⚖️ Contact the will executor if needed — see <a href="/wills-legal">Wills &amp; Legal</a></li>
+                    <li>🧾 Review nominees registered in the vault — see <a href="/nominees">Nominees</a></li>
+                </ul>
+            </div>
+        }
+
+        @* ── Step navigation ── *@
+        <div class="em-nav-row">
+            @if (_currentStep > 1)
+            {
+                <button class="em-nav-btn em-nav-btn--back" @onclick="PrevStep">
+                    ← Back
+                </button>
+            }
+            else
+            {
+                <span></span>
+            }
+
+            @if (_currentStep < TotalSteps)
+            {
+                <button class="em-nav-btn em-nav-btn--next" @onclick="NextStep">
+                    Next →
+                </button>
+            }
+            else
+            {
+                <a href="/" class="em-nav-btn em-nav-btn--done">✓ Done</a>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    private const int TotalSteps = 4;
+
+    private int _currentStep = 1;
+    private bool _isLoading = true;
+
+    private ProfileFormModel? _profile;
+    private List<BankAccountDisplayModel>    _bankAccounts   = [];
+    private List<EmergencyFundDisplayModel>  _emergencyFunds = [];
+    private List<InsuranceDisplayModel>      _policies       = [];
+    private List<DocumentMetadataModel>      _documents      = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+
+        await Task.WhenAll(
+            LoadProfileAsync(),
+            LoadBankAccountsAsync(),
+            LoadEmergencyFundsAsync(),
+            LoadInsuranceAsync(),
+            LoadDocumentsAsync());
+
+        _isLoading = false;
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        try { _profile = await ProfileApiClient.GetProfileAsync(); }
+        catch (Exception ex) { Logger.LogWarning(ex, "Emergency mode: could not load profile"); }
+    }
+
+    private async Task LoadBankAccountsAsync()
+    {
+        try { _bankAccounts = [.. await BankAccountsApiClient.GetAllAsync()]; }
+        catch (Exception ex) { Logger.LogWarning(ex, "Emergency mode: could not load bank accounts"); }
+    }
+
+    private async Task LoadEmergencyFundsAsync()
+    {
+        try { _emergencyFunds = [.. await EmergencyFundApiClient.GetAllAsync()]; }
+        catch (Exception ex) { Logger.LogWarning(ex, "Emergency mode: could not load emergency funds"); }
+    }
+
+    private async Task LoadInsuranceAsync()
+    {
+        try { _policies = [.. await InsuranceApiClient.GetAllAsync()]; }
+        catch (Exception ex) { Logger.LogWarning(ex, "Emergency mode: could not load insurance policies"); }
+    }
+
+    private async Task LoadDocumentsAsync()
+    {
+        try { _documents = [.. await VaultApiClient.GetDocumentsAsync()]; }
+        catch (Exception ex) { Logger.LogWarning(ex, "Emergency mode: could not load documents"); }
+    }
+
+    // ── Navigation ─────────────────────────────────────────────────────────
+
+    private void GoToStep(int step)
+    {
+        if (step is >= 1 and <= TotalSteps)
+            _currentStep = step;
+    }
+
+    private void NextStep() { if (_currentStep < TotalSteps) _currentStep++; }
+    private void PrevStep() { if (_currentStep > 1) _currentStep--; }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+
+    private static string StepLabel(int step) => step switch
+    {
+        1 => "Who to call",
+        2 => "Get money",
+        3 => "Documents",
+        4 => "Next steps",
+        _ => $"Step {step}"
+    };
+
+    private static string FormatAmount(decimal amount) =>
+        amount.ToString("N2");
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1_024       => $"{bytes} B",
+        < 1_048_576   => $"{bytes / 1_024.0:F1} KB",
+        _             => $"{bytes / 1_048_576.0:F1} MB"
+    };
+
+    private static string AccountTypeLabel(BankAccountType type) => type switch
+    {
+        BankAccountType.Savings          => "Savings",
+        BankAccountType.Current          => "Current",
+        BankAccountType.FixedDeposit     => "Fixed Deposit",
+        BankAccountType.RecurringDeposit => "Recurring Deposit",
+        BankAccountType.Salary           => "Salary",
+        _                                => "Other"
+    };
+}
