@@ -98,10 +98,17 @@ builder.Services.Configure<ReadinessScoreOptions>(builder.Configuration.GetSecti
 // ---------------------------------------------------------------------------
 // SQLite — connection factory and database initialisation.
 // The connection string is read from "Sqlite:ConnectionString" in configuration.
+// A relative "Data Source" path is resolved against AppContext.BaseDirectory
+// (the bin/Debug/net8.0 folder) so the .db file is always created in the same
+// directory as the running executable, regardless of the working directory set
+// by the IDE or the shell.
 // ---------------------------------------------------------------------------
-var sqliteConnectionString = builder.Configuration["Sqlite:ConnectionString"]
+var rawSqliteConnectionString = builder.Configuration["Sqlite:ConnectionString"]
     ?? throw new InvalidOperationException(
         "SQLite configuration is missing required value (Sqlite:ConnectionString).");
+
+// Parse the Data Source value and resolve it to an absolute path when it is relative.
+var sqliteConnectionString = ResolveDataSourcePath(rawSqliteConnectionString, AppContext.BaseDirectory);
 
 builder.Services.AddDbContext<FamilyVaultDbContext>(options =>
     options.UseSqlite(sqliteConnectionString));
@@ -138,8 +145,11 @@ if (isLocalDev)
     {
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var logger = serviceProvider.GetRequiredService<ILogger<LocalFileStorageService>>();
-        var storagePath = configuration["LocalDev:StoragePath"]
-            ?? Path.Combine(AppContext.BaseDirectory, "local-storage");
+        var configuredPath = configuration["LocalDev:StoragePath"] ?? "local-storage";
+        // Resolve relative paths against the bin directory so the folder is predictable.
+        var storagePath = Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.Combine(AppContext.BaseDirectory, configuredPath);
         return new LocalFileStorageService(storagePath, logger);
     });
 
@@ -234,3 +244,53 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// ---------------------------------------------------------------------------
+// Local helper – resolves a SQLite connection string's Data Source value to an
+// absolute path when it is relative.  Relative paths are anchored to baseDir
+// (AppContext.BaseDirectory = the bin folder) so the .db file is always created
+// next to the executable regardless of the IDE's working-directory setting.
+//
+// Handles both bare file names ("familyvault.db") and the "Data Source=..."
+// key=value form used by Microsoft.Data.Sqlite.
+// ---------------------------------------------------------------------------
+static string ResolveDataSourcePath(string connectionString, string baseDir)
+{
+    const string key = "data source=";
+    var lower = connectionString.Trim();
+
+    // Bare filename without a key prefix (e.g. just "familyvault.db").
+    if (!lower.Contains('='))
+    {
+        return Path.IsPathRooted(connectionString)
+            ? connectionString
+            : Path.Combine(baseDir, connectionString);
+    }
+
+    // Key=value form – locate the Data Source segment.
+    var segments = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+    var rebuilt = new List<string>(segments.Length);
+
+    foreach (var segment in segments)
+    {
+        if (segment.Trim().StartsWith(key, StringComparison.OrdinalIgnoreCase))
+        {
+            var equalIndex = segment.IndexOf('=');
+            var dataSourceValue = segment[(equalIndex + 1)..].Trim();
+
+            if (!Path.IsPathRooted(dataSourceValue) &&
+                !dataSourceValue.Equals(":memory:", StringComparison.OrdinalIgnoreCase))
+            {
+                dataSourceValue = Path.Combine(baseDir, dataSourceValue);
+            }
+
+            rebuilt.Add($"Data Source={dataSourceValue}");
+        }
+        else
+        {
+            rebuilt.Add(segment);
+        }
+    }
+
+    return string.Join(";", rebuilt);
+}
