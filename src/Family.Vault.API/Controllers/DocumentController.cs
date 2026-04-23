@@ -57,7 +57,9 @@ public sealed class DocumentController(
 
         logger.LogInformation(
             "Returning {Count} documents for user {UserId} (category={Category}, search={Search})",
-            docs.Count, userId, category, search);
+            docs.Count, userId,
+            LogSanitizer.Sanitize(category),
+            LogSanitizer.Sanitize(search));
 
         return Ok(docs);
     }
