@@ -12,7 +12,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// SQLite-backed implementation of <see cref="ITaxService"/>.
 /// </summary>
 public sealed class SqliteTaxService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteTaxService> logger) : ITaxService
 {
     /// <inheritdoc/>
@@ -20,7 +20,7 @@ public sealed class SqliteTaxService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<TaxEntryRow>(
             "SELECT Id, Country, IncomeType, TaxPaid, DeclaredInUK FROM TaxEntries WHERE UserId = @UserId",
             new { UserId = userId });
@@ -38,7 +38,7 @@ public sealed class SqliteTaxService(
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         await conn.ExecuteAsync(
             """
             INSERT INTO TaxEntries (Id, UserId, Country, IncomeType, TaxPaid, DeclaredInUK)
@@ -75,7 +75,7 @@ public sealed class SqliteTaxService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             """
             UPDATE TaxEntries
@@ -118,7 +118,7 @@ public sealed class SqliteTaxService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             "DELETE FROM TaxEntries WHERE Id = @Id AND UserId = @UserId",
             new { Id = id.ToString(), UserId = userId });

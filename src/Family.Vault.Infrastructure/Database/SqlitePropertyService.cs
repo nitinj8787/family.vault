@@ -15,7 +15,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// AssetName is stored in <c>Assets.Name</c> and country in <c>Assets.Country</c>.
 /// </summary>
 public sealed class SqlitePropertyService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqlitePropertyService> logger) : IPropertyService
 {
     private const string AssetType = "Property";
@@ -25,7 +25,7 @@ public sealed class SqlitePropertyService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<PropertyRow>(
             """
             SELECT a.Id, a.Name AS AssetName, a.Country, p.OwnershipType, p.LoanLinked, p.DocumentsLocation
@@ -48,9 +48,8 @@ public sealed class SqlitePropertyService(
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-        using var tx = conn.BeginTransaction();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+                using var tx = conn.BeginTransaction();
 
         await conn.ExecuteAsync(
             """
@@ -106,9 +105,8 @@ public sealed class SqlitePropertyService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+        
         var exists = await conn.ExecuteScalarAsync<int>(
             "SELECT COUNT(1) FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
             new { Id = id.ToString(), UserId = userId, AssetType });
@@ -162,7 +160,7 @@ public sealed class SqlitePropertyService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             "DELETE FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
             new { Id = id.ToString(), UserId = userId, AssetType });

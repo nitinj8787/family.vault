@@ -12,7 +12,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// SQLite-backed implementation of <see cref="IWillsService"/>.
 /// </summary>
 public sealed class SqliteWillsService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteWillsService> logger) : IWillsService
 {
     /// <inheritdoc/>
@@ -20,7 +20,7 @@ public sealed class SqliteWillsService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<WillEntryRow>(
             "SELECT Id, Country, ExistsFlag, Location, ExecutorName FROM WillEntries WHERE UserId = @UserId",
             new { UserId = userId });
@@ -38,7 +38,7 @@ public sealed class SqliteWillsService(
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         await conn.ExecuteAsync(
             """
             INSERT INTO WillEntries (Id, UserId, Country, ExistsFlag, Location, ExecutorName, LastUpdated)
@@ -76,7 +76,7 @@ public sealed class SqliteWillsService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             """
             UPDATE WillEntries
@@ -121,7 +121,7 @@ public sealed class SqliteWillsService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             "DELETE FROM WillEntries WHERE Id = @Id AND UserId = @UserId",
             new { Id = id.ToString(), UserId = userId });

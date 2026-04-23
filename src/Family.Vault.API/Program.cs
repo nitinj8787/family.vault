@@ -10,6 +10,7 @@ using Azure.Core;
 using Azure.Identity;
 using Family.Vault.API.Authorization;
 using Family.Vault.API.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,13 +80,12 @@ var sqliteConnectionString = builder.Configuration["Sqlite:ConnectionString"]
     ?? throw new InvalidOperationException(
         "SQLite configuration is missing required value (Sqlite:ConnectionString).");
 
-builder.Services.AddSingleton(new SqliteConnectionFactory(sqliteConnectionString));
+builder.Services.AddDbContext<FamilyVaultDbContext>(options =>
+    options.UseSqlite(sqliteConnectionString));
 
 // ---------------------------------------------------------------------------
 // Service registrations – SQLite-backed implementations.
-// All asset-domain services are registered as Scoped so each HTTP request gets
-// its own logical unit of work.  SqliteConnectionFactory is Singleton and
-// creates a new connection per call.
+// All asset-domain services are registered as Scoped and use the request-scoped DbContext.
 // ---------------------------------------------------------------------------
 builder.Services.AddScoped<IProfileService, SqliteProfileService>();
 builder.Services.AddScoped<IUkAssetService, SqliteUkAssetService>();
@@ -99,7 +99,7 @@ builder.Services.AddScoped<INomineeService, SqliteNomineeService>();
 builder.Services.AddScoped<ITaxService, SqliteTaxService>();
 builder.Services.AddScoped<IWillsService, SqliteWillsService>();
 
-builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddScoped<IDocumentService, SqliteDocumentService>();
 builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
 builder.Services.AddScoped<IInsightService, InsightService>();
 builder.Services.AddScoped<IReadinessScoreService, ReadinessScoreService>();

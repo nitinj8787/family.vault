@@ -14,7 +14,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// joined with a row in <c>Investments</c>.
 /// </summary>
 public sealed class SqliteInvestmentService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteInvestmentService> logger) : IInvestmentService
 {
     private const string AssetType = "Investment";
@@ -24,7 +24,7 @@ public sealed class SqliteInvestmentService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var rows = await conn.QueryAsync<InvestmentRow>(
             """
             SELECT a.Id, i.Platform, i.InvestmentType, i.AccountId, i.Nominee
@@ -47,9 +47,8 @@ public sealed class SqliteInvestmentService(
 
         var id = Guid.NewGuid().ToString();
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-        using var tx = conn.BeginTransaction();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+                using var tx = conn.BeginTransaction();
 
         await conn.ExecuteAsync(
             """
@@ -97,9 +96,8 @@ public sealed class SqliteInvestmentService(
     {
         ValidateRequest(request);
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+        
         var exists = await conn.ExecuteScalarAsync<int>(
             "SELECT COUNT(1) FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
             new { Id = id.ToString(), UserId = userId, AssetType });
@@ -154,7 +152,7 @@ public sealed class SqliteInvestmentService(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
         var affected = await conn.ExecuteAsync(
             "DELETE FROM Assets WHERE Id = @Id AND UserId = @UserId AND AssetType = @AssetType",
             new { Id = id.ToString(), UserId = userId, AssetType });

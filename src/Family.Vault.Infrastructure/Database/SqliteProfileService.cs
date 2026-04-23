@@ -16,7 +16,7 @@ namespace Family.Vault.Infrastructure.Database;
 /// constraints are satisfied without requiring a full authentication layer.
 /// </summary>
 public sealed class SqliteProfileService(
-    SqliteConnectionFactory connectionFactory,
+    FamilyVaultDbContext dbContext,
     ILogger<SqliteProfileService> logger) : IProfileService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -26,9 +26,8 @@ public sealed class SqliteProfileService(
         string userId,
         CancellationToken cancellationToken = default)
     {
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+        
         var profile = await conn.QuerySingleOrDefaultAsync<ProfileRow>(
             "SELECT Id, FullName, SpouseName, DOB, Address, ChildrenJson FROM Profiles WHERE UserId = @UserId",
             new { UserId = userId });
@@ -57,9 +56,8 @@ public sealed class SqliteProfileService(
 
         var dob = request.DateOfBirth?.ToString("yyyy-MM-dd");
 
-        using var conn = connectionFactory.CreateConnection();
-        conn.Open();
-        using var tx = conn.BeginTransaction();
+        var conn = await dbContext.OpenConnectionAsync(cancellationToken);
+                using var tx = conn.BeginTransaction();
 
         // Ensure a Users row exists so FK constraints pass.
         await conn.ExecuteAsync(
