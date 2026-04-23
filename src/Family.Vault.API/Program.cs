@@ -100,6 +100,7 @@ builder.Services.AddScoped<IWillsService, SqliteWillsService>();
 
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
+builder.Services.AddScoped<IInsightService, InsightService>();
 
 // Register DefaultAzureCredential as a singleton so that token caching is shared across all
 // consumers and re-authentication round-trips are minimised.

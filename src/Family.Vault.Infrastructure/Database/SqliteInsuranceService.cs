@@ -27,7 +27,7 @@ public sealed class SqliteInsuranceService(
         using var conn = connectionFactory.CreateConnection();
         var rows = await conn.QueryAsync<InsurancePolicyRow>(
             """
-            SELECT a.Id, a.Provider, ip.PolicyNumber, ip.PolicyType, ip.Coverage, ip.ClaimContact, ip.Nominee
+            SELECT a.Id, a.Provider, ip.PolicyNumber, ip.PolicyType, ip.Coverage, ip.ClaimContact, ip.Nominee, ip.ExpiryDate
               FROM InsurancePolicies ip
               JOIN Assets a ON ip.Id = a.Id
              WHERE a.UserId = @UserId AND a.IsActive = 1
@@ -61,8 +61,8 @@ public sealed class SqliteInsuranceService(
 
         await conn.ExecuteAsync(
             """
-            INSERT INTO InsurancePolicies (Id, PolicyNumber, PolicyType, Coverage, ClaimContact, Nominee)
-            VALUES (@Id, @PolicyNumber, @PolicyType, @Coverage, @ClaimContact, @Nominee)
+            INSERT INTO InsurancePolicies (Id, PolicyNumber, PolicyType, Coverage, ClaimContact, Nominee, ExpiryDate)
+            VALUES (@Id, @PolicyNumber, @PolicyType, @Coverage, @ClaimContact, @Nominee, @ExpiryDate)
             """,
             new
             {
@@ -71,7 +71,8 @@ public sealed class SqliteInsuranceService(
                 request.PolicyType,
                 request.Coverage,
                 request.ClaimContact,
-                request.Nominee
+                request.Nominee,
+                ExpiryDate = request.ExpiryDate?.ToString("yyyy-MM-dd")
             },
             tx);
 
@@ -88,7 +89,8 @@ public sealed class SqliteInsuranceService(
             PolicyNumber: request.PolicyNumber,
             Coverage: request.Coverage,
             Nominee: request.Nominee,
-            ClaimContact: request.ClaimContact);
+            ClaimContact: request.ClaimContact,
+            ExpiryDate: request.ExpiryDate);
     }
 
     /// <inheritdoc/>
@@ -127,7 +129,8 @@ public sealed class SqliteInsuranceService(
                    PolicyType = @PolicyType,
                    Coverage = @Coverage,
                    ClaimContact = @ClaimContact,
-                   Nominee = @Nominee
+                   Nominee = @Nominee,
+                   ExpiryDate = @ExpiryDate
              WHERE Id = @Id
             """,
             new
@@ -137,6 +140,7 @@ public sealed class SqliteInsuranceService(
                 request.Coverage,
                 request.ClaimContact,
                 request.Nominee,
+                ExpiryDate = request.ExpiryDate?.ToString("yyyy-MM-dd"),
                 Id = id.ToString()
             },
             tx);
@@ -152,7 +156,8 @@ public sealed class SqliteInsuranceService(
             PolicyNumber: request.PolicyNumber,
             Coverage: request.Coverage,
             Nominee: request.Nominee,
-            ClaimContact: request.ClaimContact);
+            ClaimContact: request.ClaimContact,
+            ExpiryDate: request.ExpiryDate);
     }
 
     /// <inheritdoc/>
@@ -217,7 +222,12 @@ public sealed class SqliteInsuranceService(
             PolicyNumber: row.PolicyNumber,
             Coverage: row.Coverage,
             Nominee: row.Nominee,
-            ClaimContact: row.ClaimContact);
+            ClaimContact: row.ClaimContact,
+            ExpiryDate: row.ExpiryDate is null
+                ? null
+                : DateOnly.TryParseExact(row.ExpiryDate, "yyyy-MM-dd", out var d)
+                    ? d
+                    : null);
 
     // -----------------------------------------------------------------
     // Row mapping class
@@ -232,5 +242,6 @@ public sealed class SqliteInsuranceService(
         public string Coverage { get; init; } = "";
         public string ClaimContact { get; init; } = "";
         public string? Nominee { get; init; }
+        public string? ExpiryDate { get; init; }
     }
 }

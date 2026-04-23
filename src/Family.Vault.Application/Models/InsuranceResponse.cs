@@ -10,6 +10,7 @@ namespace Family.Vault.Application.Models;
 /// <param name="Coverage">Coverage details or insured amount.</param>
 /// <param name="Nominee">Name of the nominated beneficiary, if any.</param>
 /// <param name="ClaimContact">Claim support contact details.</param>
+/// <param name="ExpiryDate">Optional policy expiry date. Used to surface expiring-soon insights.</param>
 public sealed record InsuranceResponse(
     Guid Id,
     string Provider,
@@ -17,4 +18,6 @@ public sealed record InsuranceResponse(
     string PolicyNumber,
     string Coverage,
     string? Nominee,
-    string ClaimContact);
+    string ClaimContact,
+    DateOnly? ExpiryDate = null);
+

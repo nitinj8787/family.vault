@@ -30,6 +30,9 @@ public sealed class InsuranceFormModel
     [MaxLength(120, ErrorMessage = "Claim contact must not exceed 120 characters.")]
     public string ClaimContact { get; set; } = string.Empty;
 
+    /// <summary>Optional policy expiry date. Drives "expiring soon" dashboard insights.</summary>
+    public DateOnly? ExpiryDate { get; set; }
+
     public bool IsNew => Id == Guid.Empty;
 }
 
@@ -43,4 +46,16 @@ public sealed class InsuranceDisplayModel
     public string Coverage { get; set; } = string.Empty;
     public string? Nominee { get; set; }
     public string ClaimContact { get; set; } = string.Empty;
+
+    /// <summary>Optional policy expiry date. Null if not recorded.</summary>
+    public DateOnly? ExpiryDate { get; set; }
+
+    /// <summary>True when the policy has an expiry date and that date is in the past.</summary>
+    public bool IsExpired => ExpiryDate.HasValue && ExpiryDate.Value < DateOnly.FromDateTime(DateTime.Today);
+
+    /// <summary>True when the policy expires within 30 days from today.</summary>
+    public bool IsExpiringSoon =>
+        ExpiryDate.HasValue
+        && !IsExpired
+        && ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.Today.AddDays(30));
 }

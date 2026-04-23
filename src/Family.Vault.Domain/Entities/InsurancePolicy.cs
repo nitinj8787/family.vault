@@ -13,7 +13,8 @@ public sealed class InsurancePolicy
         string policyNumber,
         string coverage,
         string? nominee,
-        string claimContact)
+        string claimContact,
+        DateOnly? expiryDate = null)
     {
         Id = id;
         UserId = userId;
@@ -23,6 +24,7 @@ public sealed class InsurancePolicy
         Coverage = coverage;
         Nominee = nominee;
         ClaimContact = claimContact;
+        ExpiryDate = expiryDate;
     }
 
     public Guid Id { get; }
@@ -33,4 +35,11 @@ public sealed class InsurancePolicy
     public string Coverage { get; }
     public string? Nominee { get; }
     public string ClaimContact { get; }
+
+    /// <summary>
+    /// Optional expiry date of the policy. Used to surface "expiring soon" insights
+    /// in the Dashboard.
+    /// </summary>
+    public DateOnly? ExpiryDate { get; }
 }
+
