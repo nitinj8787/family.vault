@@ -14,6 +14,7 @@ namespace Family.Vault.API.Controllers;
 [Authorize]
 public sealed class DashboardController(
     IInsightService insightService,
+    IReadinessScoreService readinessScoreService,
     ILogger<DashboardController> logger) : ControllerBase
 {
     /// <summary>
@@ -47,6 +48,36 @@ public sealed class DashboardController(
         return Ok(insights);
     }
 
+    /// <summary>
+    /// Returns the Family Readiness Score for the signed-in user.
+    ///
+    /// The score (0–100) is a composite of four configurable categories:
+    /// <list type="bullet">
+    ///   <item>Nominee coverage across all nominee-able assets</item>
+    ///   <item>Emergency fund adequacy</item>
+    ///   <item>Will availability across recorded jurisdictions</item>
+    ///   <item>Documents uploaded to the vault</item>
+    /// </list>
+    ///
+    /// Category weights are controlled by the <c>ReadinessScore</c> configuration section.
+    /// The response also includes a per-category breakdown.
+    /// </summary>
+    [HttpGet("score")]
+    [Authorize(Policy = AuthorizationPolicies.FamilyAssetReader)]
+    [ProducesResponseType(typeof(ReadinessScoreResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetScore(CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        var score = await readinessScoreService.GetScoreAsync(userId, cancellationToken);
+
+        logger.LogInformation(
+            "Returning readiness score {Score}/100 for user {UserId}", score.TotalScore, userId);
+
+        return Ok(score);
+    }
+
     // -----------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------
@@ -57,3 +88,4 @@ public sealed class DashboardController(
         ?? User.Identity?.Name
         ?? "default";
 }
+

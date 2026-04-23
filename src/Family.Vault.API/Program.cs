@@ -69,6 +69,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<VaultUploadOptions>(builder.Configuration.GetSection(VaultUploadOptions.SectionName));
 builder.Services.Configure<DocumentOptions>(builder.Configuration.GetSection(DocumentOptions.SectionName));
+builder.Services.Configure<ReadinessScoreOptions>(builder.Configuration.GetSection(ReadinessScoreOptions.SectionName));
 
 // ---------------------------------------------------------------------------
 // SQLite — connection factory and database initialisation.
@@ -101,6 +102,7 @@ builder.Services.AddScoped<IWillsService, SqliteWillsService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
 builder.Services.AddScoped<IInsightService, InsightService>();
+builder.Services.AddScoped<IReadinessScoreService, ReadinessScoreService>();
 
 // Register DefaultAzureCredential as a singleton so that token caching is shared across all
 // consumers and re-authentication round-trips are minimised.

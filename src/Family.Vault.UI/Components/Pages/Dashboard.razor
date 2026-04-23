@@ -10,6 +10,7 @@
 @inject INomineeApiClient NomineeApiClient
 @inject IEmergencyFundApiClient EmergencyFundApiClient
 @inject IWillsApiClient WillsApiClient
+@inject IDashboardApiClient DashboardApiClient
 @inject ILogger<Dashboard> Logger
 @inject NavigationManager Navigation
 
@@ -47,23 +48,23 @@ else
             </div>
         </div>
         <div class="vault-dash-snapshot__score-panel">
-            <div class="vault-dash-snapshot__score-label">Emergency Readiness</div>
-            <div class="vault-dash-snapshot__score-number vault-dash-snapshot__score-number--@ScoreFillColor"
+            <div class="vault-dash-snapshot__score-label">Family Readiness Score</div>
+            <div class="vault-dash-snapshot__score-number vault-dash-snapshot__score-number--@(_score?.FillColor ?? "low")"
                  role="img"
-                 aria-label="Readiness score @_readinessScore out of 100">
-                @_readinessScore<span class="vault-dash-snapshot__score-max">/100</span>
+                 aria-label="Readiness score @(_score?.TotalScore ?? 0) out of 100">
+                @(_score?.TotalScore ?? 0)<span class="vault-dash-snapshot__score-max">/100</span>
             </div>
             <div class="vault-dash-progress-bar"
                  role="progressbar"
-                 aria-valuenow="@_readinessScore"
+                 aria-valuenow="@(_score?.TotalScore ?? 0)"
                  aria-valuemin="0"
                  aria-valuemax="100"
                  aria-label="Readiness progress">
-                <div class="vault-dash-progress-fill vault-dash-progress-fill--@ScoreFillColor"
-                     style="width: @_readinessScore%">
+                <div class="vault-dash-progress-fill vault-dash-progress-fill--@(_score?.FillColor ?? "low")"
+                     style="width: @(_score?.TotalScore ?? 0)%">
                 </div>
             </div>
-            <p class="vault-dash-snapshot__score-desc">@ScoreDescription</p>
+            <p class="vault-dash-snapshot__score-desc">@(_score?.Description ?? "Loading…")</p>
         </div>
     </div>
 
@@ -306,76 +307,26 @@ else
 
     @* ── Readiness Score Breakdown ── *@
     <h2 class="vault-dash-section-title">Readiness Score Breakdown</h2>
-    <div class="vault-dash-score-breakdown">
-        <div class="vault-dash-score-row">
-            <span class="vault-dash-score-row__icon">@(_willsScore == 25 ? "✅" : "⚠️")</span>
-            <span class="vault-dash-score-row__label">Wills &amp; Legal</span>
-            <span class="vault-dash-score-row__detail">
-                @if (_willEntries == 0)
-                {
-                    <span class="vault-muted">No jurisdictions recorded</span>
-                }
-                else
-                {
-                    <text>@(_willEntries - _missingWillCount) of @_willEntries @(_willEntries == 1 ? "jurisdiction has" : "jurisdictions have") a will</text>
-                }
-            </span>
-            <span class="vault-dash-score-row__pts @(_willsScore == 25 ? "pts--full" : "pts--partial")">
-                @_willsScore / 25 pts
-            </span>
+    @if (_score is not null && _score.Categories.Count > 0)
+    {
+        <div class="vault-dash-score-breakdown">
+            @foreach (var cat in _score.Categories)
+            {
+                <div class="vault-dash-score-row">
+                    <span class="vault-dash-score-row__icon">@(cat.IsFullScore ? "✅" : "⚠️")</span>
+                    <span class="vault-dash-score-row__label">@cat.CategoryName</span>
+                    <span class="vault-dash-score-row__detail">@cat.Description</span>
+                    <span class="vault-dash-score-row__pts @(cat.IsFullScore ? "pts--full" : "pts--partial")">
+                        @cat.Score / @cat.MaxScore pts
+                    </span>
+                </div>
+            }
         </div>
-        <div class="vault-dash-score-row">
-            <span class="vault-dash-score-row__icon">@(_nomineesScore == 25 ? "✅" : "⚠️")</span>
-            <span class="vault-dash-score-row__label">Nominee Coverage</span>
-            <span class="vault-dash-score-row__detail">
-                @if (_nomineeableAssets == 0)
-                {
-                    <span class="vault-muted">No assets recorded</span>
-                }
-                else
-                {
-                    <text>@(_nomineeableAssets - _assetsWithoutNominee) of @_nomineeableAssets assets covered</text>
-                }
-            </span>
-            <span class="vault-dash-score-row__pts @(_nomineesScore == 25 ? "pts--full" : "pts--partial")">
-                @_nomineesScore / 25 pts
-            </span>
-        </div>
-        <div class="vault-dash-score-row">
-            <span class="vault-dash-score-row__icon">@(_emergencyScore == 25 ? "✅" : "⚠️")</span>
-            <span class="vault-dash-score-row__label">Emergency Fund</span>
-            <span class="vault-dash-score-row__detail">
-                @if (_emergencyFundEntries == 0)
-                {
-                    <span class="vault-muted">No emergency fund recorded</span>
-                }
-                else
-                {
-                    <text>@_emergencyFundEntries @(_emergencyFundEntries == 1 ? "entry" : "entries") on record</text>
-                }
-            </span>
-            <span class="vault-dash-score-row__pts @(_emergencyScore == 25 ? "pts--full" : "pts--partial")">
-                @_emergencyScore / 25 pts
-            </span>
-        </div>
-        <div class="vault-dash-score-row">
-            <span class="vault-dash-score-row__icon">@(_assetsScore == 25 ? "✅" : "⚠️")</span>
-            <span class="vault-dash-score-row__label">Asset Coverage</span>
-            <span class="vault-dash-score-row__detail">
-                @if (_totalAssets == 0)
-                {
-                    <span class="vault-muted">No assets recorded yet</span>
-                }
-                else
-                {
-                    <text>@_totalAssets @(_totalAssets == 1 ? "asset" : "assets") tracked across all sections</text>
-                }
-            </span>
-            <span class="vault-dash-score-row__pts @(_assetsScore == 25 ? "pts--full" : "pts--partial")">
-                @_assetsScore / 25 pts
-            </span>
-        </div>
-    </div>
+    }
+    else
+    {
+        <p class="vault-muted">Score breakdown unavailable.</p>
+    }
 }
 
 @if (_loadError is not null)
@@ -389,8 +340,6 @@ else
     // -----------------------------------------------------------------
 
     private const decimal MinimumRecommendedEmergencyFund = 1000m;
-    private const int GoodScoreThreshold    = 80;
-    private const int WarningScoreThreshold = 50;
 
     // -----------------------------------------------------------------
     // State
@@ -399,6 +348,9 @@ else
     private bool _isLoading = true;
     private string? _loadError;
     private DateTime _loadedAt;
+
+    // Readiness score (from API)
+    private ReadinessScoreModel? _score;
 
     // Section counts
     private int _ukAssets;
@@ -418,19 +370,12 @@ else
     private int _investmentsNoNominee;
     private int _insuranceNoNominee;
 
-    // Computed aggregates
+    // Computed aggregates (used by the Insights section)
     private int _totalAssets;
     private int _nomineeableAssets;
     private int _assetsWithoutNominee;
     private int _missingWillCount;
     private decimal _emergencyFundTotal;
-
-    // Score components
-    private int _willsScore;
-    private int _nomineesScore;
-    private int _emergencyScore;
-    private int _assetsScore;
-    private int _readinessScore;
 
     // -----------------------------------------------------------------
     // Helpers
@@ -442,20 +387,6 @@ else
         || _emergencyFundEntries == 0
         || _emergencyFundTotal < MinimumRecommendedEmergencyFund
         || _insuranceNoNominee > 0;
-
-    private string ScoreFillColor => _readinessScore >= GoodScoreThreshold ? "good"
-        : _readinessScore >= WarningScoreThreshold ? "warn"
-        : "low";
-
-    private string ScoreClass => _readinessScore >= GoodScoreThreshold ? "vault-dash-score--good"
-        : _readinessScore >= WarningScoreThreshold ? "vault-dash-score--warn"
-        : "vault-dash-score--low";
-
-    private string ScoreDescription => _readinessScore >= GoodScoreThreshold
-        ? "Great – your vault is well protected."
-        : _readinessScore >= WarningScoreThreshold
-            ? "Moderate – a few gaps to address."
-            : "Low – important items are missing.";
 
     // -----------------------------------------------------------------
     // Load
@@ -470,18 +401,19 @@ else
 
         try
         {
-            // Fan-out all API calls in parallel
-            var t1 = UkAssetsApiClient.GetAllAsync();
-            var t2 = IndiaAssetsApiClient.GetAllAsync();
-            var t3 = BankAccountsApiClient.GetAllAsync();
-            var t4 = InvestmentsApiClient.GetAllAsync();
-            var t5 = InsuranceApiClient.GetAllAsync();
-            var t6 = PropertyApiClient.GetAllAsync();
-            var t7 = NomineeApiClient.GetAllAsync();
-            var t8 = EmergencyFundApiClient.GetAllAsync();
-            var t9 = WillsApiClient.GetAllAsync();
+            // Fan-out all API calls in parallel — domain data + readiness score
+            var t1  = UkAssetsApiClient.GetAllAsync();
+            var t2  = IndiaAssetsApiClient.GetAllAsync();
+            var t3  = BankAccountsApiClient.GetAllAsync();
+            var t4  = InvestmentsApiClient.GetAllAsync();
+            var t5  = InsuranceApiClient.GetAllAsync();
+            var t6  = PropertyApiClient.GetAllAsync();
+            var t7  = NomineeApiClient.GetAllAsync();
+            var t8  = EmergencyFundApiClient.GetAllAsync();
+            var t9  = WillsApiClient.GetAllAsync();
+            var t10 = DashboardApiClient.GetReadinessScoreAsync();
 
-            await Task.WhenAll(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+            await Task.WhenAll(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
 
             var ukAssets      = await t1;
             var indiaAssets   = await t2;
@@ -492,6 +424,7 @@ else
             var nominees      = await t7;
             var emergencyFund = await t8;
             var wills         = await t9;
+            _score            = await t10;
 
             // Section counts
             _ukAssets             = ukAssets.Count;
@@ -511,7 +444,7 @@ else
             _investmentsNoNominee  = investments.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
             _insuranceNoNominee    = insurance.Count(a => string.IsNullOrWhiteSpace(a.Nominee));
 
-            // Aggregates
+            // Aggregates used by the Insights section
             _totalAssets          = _ukAssets + _indiaAssets + _bankAccounts + _investments + _insurance + _properties;
             _nomineeableAssets    = _ukAssets + _indiaAssets + _bankAccounts + _investments + _insurance;
             _assetsWithoutNominee = _ukAssetsNoNominee + _indiaAssetsNoNominee + _bankAccountsNoNominee
@@ -519,28 +452,11 @@ else
             _missingWillCount     = wills.Count(w => w.IsMissingWill);
             _emergencyFundTotal   = emergencyFund.Sum(e => e.Amount);
 
-            // Score calculation (25 pts each, 100 total)
-            // Wills: full score if all recorded jurisdictions have a will (or no jurisdictions yet = 0)
-            _willsScore = _willEntries == 0 ? 0
-                : (int)Math.Round(25.0 * (_willEntries - _missingWillCount) / _willEntries);
-
-            // Nominees: proportional to coverage across nominee-able assets
-            _nomineesScore = _nomineeableAssets == 0 ? 0
-                : (int)Math.Round(25.0 * (_nomineeableAssets - _assetsWithoutNominee) / _nomineeableAssets);
-
-            // Emergency fund: 25 if any entries exist, 0 otherwise
-            _emergencyScore = _emergencyFundEntries > 0 ? 25 : 0;
-
-            // Assets: 25 if any assets tracked, 0 otherwise
-            _assetsScore = _totalAssets > 0 ? 25 : 0;
-
-            _readinessScore = _willsScore + _nomineesScore + _emergencyScore + _assetsScore;
-
             _loadedAt = DateTime.Now;
 
             Logger.LogInformation(
                 "Dashboard loaded: totalAssets={Total}, missingWills={Wills}, assetsNoNominee={Nominees}, score={Score}",
-                _totalAssets, _missingWillCount, _assetsWithoutNominee, _readinessScore);
+                _totalAssets, _missingWillCount, _assetsWithoutNominee, _score?.TotalScore ?? 0);
         }
         catch (Exception ex)
         {

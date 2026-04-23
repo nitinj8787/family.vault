@@ -157,6 +157,14 @@ builder.Services.AddHttpClient<IWillsApiClient, WillsApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Typed HttpClient for the Dashboard API (insights, readiness score).
+builder.Services.AddHttpClient<IDashboardApiClient, DashboardApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["VaultApi:BaseUrl"]
+        ?? throw new InvalidOperationException("VaultApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
