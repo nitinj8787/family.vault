@@ -214,8 +214,20 @@ public sealed class SqliteInsuranceService(
             throw new InsuranceValidationException("Claim contact must not exceed 120 characters.");
     }
 
-    private static InsuranceResponse MapToResponse(InsurancePolicyRow row) =>
-        new(
+    private InsuranceResponse MapToResponse(InsurancePolicyRow row)
+    {
+        DateOnly? expiryDate = null;
+        if (row.ExpiryDate is not null)
+        {
+            if (DateOnly.TryParseExact(row.ExpiryDate, "yyyy-MM-dd", out var parsed))
+                expiryDate = parsed;
+            else
+                logger.LogWarning(
+                    "Insurance policy {PolicyId} has a malformed ExpiryDate value '{Value}' in the database; value will be ignored.",
+                    row.Id, row.ExpiryDate);
+        }
+
+        return new InsuranceResponse(
             Id: Guid.Parse(row.Id),
             Provider: row.Provider,
             PolicyType: row.PolicyType,
@@ -223,11 +235,8 @@ public sealed class SqliteInsuranceService(
             Coverage: row.Coverage,
             Nominee: row.Nominee,
             ClaimContact: row.ClaimContact,
-            ExpiryDate: row.ExpiryDate is null
-                ? null
-                : DateOnly.TryParseExact(row.ExpiryDate, "yyyy-MM-dd", out var d)
-                    ? d
-                    : null);
+            ExpiryDate: expiryDate);
+    }
 
     // -----------------------------------------------------------------
     // Row mapping class

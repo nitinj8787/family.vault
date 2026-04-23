@@ -185,7 +185,7 @@ public sealed class InsightService(
         IReadOnlyList<InsuranceResponse> insurance,
         List<InsightResponse> insights)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(DateTime.Today);
         var warningCutoff  = today.AddDays(ExpiringInsuranceWarningDays);
         var criticalCutoff = today.AddDays(ExpiringInsuranceCriticalDays);
 
