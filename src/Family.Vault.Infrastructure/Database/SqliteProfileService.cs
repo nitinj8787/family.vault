@@ -57,7 +57,7 @@ public sealed class SqliteProfileService(
         var dob = request.DateOfBirth?.ToString("yyyy-MM-dd");
 
         var conn = await dbContext.OpenConnectionAsync(cancellationToken);
-                using var tx = conn.BeginTransaction();
+        using var tx = conn.BeginTransaction();
 
         // Ensure a Users row exists so FK constraints pass.
         await conn.ExecuteAsync(

@@ -41,6 +41,20 @@ public sealed class SqliteDocumentService(
         var uploadedAt = DateTimeOffset.UtcNow;
         var id = Guid.NewGuid();
 
+        var existingUser = await dbContext.Users
+            .SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (existingUser is null)
+        {
+            dbContext.Users.Add(new UserEntity
+            {
+                Id = userId,
+                Email = $"{userId}@vault.local",
+                FullName = userId,
+                IsActive = 1
+            });
+        }
+
         dbContext.Documents.Add(new DocumentMetadataEntity
         {
             Id = id.ToString(),
@@ -94,7 +108,10 @@ public sealed class SqliteDocumentService(
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            query = query.Where(d => d.FileName.Contains(searchTerm) || d.Description.Contains(searchTerm));
+            var normalizedSearch = searchTerm.ToLower();
+            query = query.Where(d =>
+                d.FileName.ToLower().Contains(normalizedSearch) ||
+                d.Description.ToLower().Contains(normalizedSearch));
         }
 
         var rows = await query

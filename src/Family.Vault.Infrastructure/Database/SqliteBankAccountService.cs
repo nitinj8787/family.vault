@@ -57,7 +57,7 @@ public sealed class SqliteBankAccountService(
         var id = Guid.NewGuid().ToString();
 
         var conn = await dbContext.OpenConnectionAsync(cancellationToken);
-                using var tx = conn.BeginTransaction();
+        using var tx = conn.BeginTransaction();
 
         await conn.ExecuteAsync(
             """
