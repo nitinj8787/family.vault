@@ -42,7 +42,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
         var id = Guid.NewGuid();
         var policy = new InsurancePolicy(
             id, userId, request.Provider, request.PolicyType, request.PolicyNumber,
-            request.Coverage, request.Nominee, request.ClaimContact);
+            request.Coverage, request.Nominee, request.ClaimContact, request.ExpiryDate);
 
         _policyStore[(userId, id)] = policy;
 
@@ -71,7 +71,7 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
 
         var updated = new InsurancePolicy(
             id, userId, request.Provider, request.PolicyType, request.PolicyNumber,
-            request.Coverage, request.Nominee, request.ClaimContact);
+            request.Coverage, request.Nominee, request.ClaimContact, request.ExpiryDate);
 
         _policyStore[(userId, id)] = updated;
 
@@ -134,5 +134,6 @@ public sealed class InsuranceService(ILogger<InsuranceService> logger) : IInsura
             PolicyNumber: policy.PolicyNumber,
             Coverage: policy.Coverage,
             Nominee: policy.Nominee,
-            ClaimContact: policy.ClaimContact);
+            ClaimContact: policy.ClaimContact,
+            ExpiryDate: policy.ExpiryDate);
 }

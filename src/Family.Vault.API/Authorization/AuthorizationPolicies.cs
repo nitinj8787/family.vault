@@ -6,17 +6,40 @@ namespace Family.Vault.API.Authorization;
 public static class AuthorizationPolicies
 {
     /// <summary>
-    /// Requires the caller to hold the <see cref="Roles.Admin"/> or <see cref="Roles.FamilyUser"/> role.
-    /// Used for listing and uploading vault items.
+    /// Requires full write access.
+    /// Allowed roles: <see cref="Roles.PrimaryUser"/>, legacy <see cref="Roles.Admin"/>,
+    /// and legacy <see cref="Roles.FamilyUser"/>.
     /// </summary>
-    public const string FamilyMember = "FamilyMember";
+    public const string FullAccess = "FullAccess";
 
     /// <summary>
-    /// Requires the caller to hold at least one of <see cref="Roles.Admin"/>,
-    /// <see cref="Roles.FamilyUser"/>, or <see cref="Roles.EmergencyAccess"/>.
-    /// Used for downloading vault items, where emergency responders also need read access.
+    /// Requires read access for family assets.
+    /// Adds <see cref="Roles.Spouse"/> to <see cref="FullAccess"/>.
     /// </summary>
-    public const string VaultReader = "VaultReader";
+    public const string FamilyAssetReader = "FamilyAssetReader";
+
+    /// <summary>
+    /// Requires read access for critical data.
+    /// Adds <see cref="Roles.EmergencyAccess"/> to <see cref="FamilyAssetReader"/>.
+    /// </summary>
+    public const string CriticalDataReader = "CriticalDataReader";
+
+    /// <summary>
+    /// Allows limited spouse edit access plus full-access roles.
+    /// </summary>
+    public const string LimitedEditor = "LimitedEditor";
+
+    /// <summary>
+    /// Alias for <see cref="FullAccess"/>. Kept for backwards-compatibility with existing
+    /// <c>[Authorize]</c> callsites. Prefer <see cref="FullAccess"/> for new code.
+    /// </summary>
+    public const string FamilyMember = FullAccess;
+
+    /// <summary>
+    /// Alias for <see cref="FamilyAssetReader"/>. Kept for backwards-compatibility with existing
+    /// <c>[Authorize]</c> callsites. Prefer <see cref="FamilyAssetReader"/> for new code.
+    /// </summary>
+    public const string VaultReader = FamilyAssetReader;
 
     /// <summary>
     /// Requires the caller to hold the <see cref="Roles.Admin"/> role exclusively.

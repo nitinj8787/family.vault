@@ -6,7 +6,11 @@ namespace Family.Vault.API.Authorization;
 /// </summary>
 public static class Roles
 {
+    public const string PrimaryUser = "PrimaryUser";
+    public const string Spouse = "Spouse";
+    public const string EmergencyAccess = "EmergencyAccess";
+
+    // Legacy roles preserved for backward compatibility with existing role assignments.
     public const string Admin = "Admin";
     public const string FamilyUser = "FamilyUser";
-    public const string EmergencyAccess = "EmergencyAccess";
 }

@@ -17,19 +17,27 @@ public interface IVaultApiClient
     /// <param name="fileName">Original file name including extension.</param>
     /// <param name="fileSizeBytes">File size in bytes (used for client-side logging).</param>
     /// <param name="content">Readable stream with the file bytes.</param>
-    /// <param name="category">Category name: <c>Uk</c>, <c>India</c>, or <c>Insurance</c>.</param>
+    /// <param name="category">Category name: <c>Uk</c>, <c>India</c>, <c>Insurance</c>, <c>Legal</c>, <c>Financial</c>, <c>Medical</c>, or <c>Other</c>.</param>
+    /// <param name="description">Optional free-text description of the document.</param>
     /// <param name="cancellationToken">Propagated cancellation token.</param>
     Task<DocumentUploadResult> UploadDocumentAsync(
         string fileName,
         long fileSizeBytes,
         Stream content,
         string category,
+        string description = "",
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns the rich metadata list for all documents belonging to the signed-in user.
+    /// When <paramref name="category"/> and/or <paramref name="search"/> are provided they
+    /// are forwarded to the API as query parameters for server-side filtering.
     /// </summary>
+    /// <param name="category">Optional category filter (e.g. <c>Uk</c>, <c>Legal</c>).</param>
+    /// <param name="search">Optional free-text search applied to file name and description.</param>
     Task<IReadOnlyList<DocumentMetadataModel>> GetDocumentsAsync(
+        string? category = null,
+        string? search = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

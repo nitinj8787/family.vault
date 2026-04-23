@@ -1,6 +1,7 @@
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Exceptions;
 using Family.Vault.Application.Models;
+using Family.Vault.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,7 @@ public sealed class BankAccountsController(
 {
     /// <summary>Returns all bank accounts belonging to the currently authenticated user.</summary>
     [HttpGet]
+    [Authorize(Policy = AuthorizationPolicies.FamilyAssetReader)]
     [ProducesResponseType(typeof(IReadOnlyList<BankAccountResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
@@ -27,6 +29,7 @@ public sealed class BankAccountsController(
 
     /// <summary>Adds a new bank account for the currently authenticated user.</summary>
     [HttpPost]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(typeof(BankAccountResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -52,6 +55,7 @@ public sealed class BankAccountsController(
 
     /// <summary>Updates an existing bank account for the currently authenticated user.</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(typeof(BankAccountResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -86,6 +90,7 @@ public sealed class BankAccountsController(
 
     /// <summary>Deletes a bank account for the currently authenticated user.</summary>
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

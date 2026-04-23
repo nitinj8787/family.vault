@@ -9,6 +9,7 @@ public sealed class DocumentMetadataModel
     public Guid Id { get; set; }
     public string FileName { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public long FileSizeBytes { get; set; }
     public string StoragePath { get; set; } = string.Empty;
     public DateTimeOffset UploadedAtUtc { get; set; }

@@ -24,10 +24,33 @@ public interface IDocumentService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Returns all document metadata records belonging to <paramref name="userId"/>.
+    /// Returns all document metadata records belonging to <paramref name="userId"/>,
+    /// ordered by descending upload date.
     /// </summary>
     Task<IReadOnlyList<DocumentMetadataResponse>> GetAllAsync(
         string userId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns document metadata records for <paramref name="userId"/> that match the
+    /// optional <paramref name="category"/> and/or <paramref name="searchTerm"/> filters.
+    /// When both parameters are <c>null</c> the result is identical to
+    /// <see cref="GetAllAsync"/>.
+    /// </summary>
+    /// <param name="userId">Identity of the authenticated user.</param>
+    /// <param name="category">
+    /// When provided, only documents whose <c>Category</c> matches this value
+    /// (case-insensitive) are returned.
+    /// </param>
+    /// <param name="searchTerm">
+    /// When provided, only documents whose <c>FileName</c> or <c>Description</c>
+    /// contains this substring (case-insensitive) are returned.
+    /// </param>
+    /// <param name="cancellationToken">Propagated cancellation token.</param>
+    Task<IReadOnlyList<DocumentMetadataResponse>> SearchAsync(
+        string userId,
+        string? category = null,
+        string? searchTerm = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

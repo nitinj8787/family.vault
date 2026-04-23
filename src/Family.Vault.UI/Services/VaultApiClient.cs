@@ -50,6 +50,7 @@ public sealed class VaultApiClient(
         long fileSizeBytes,
         Stream content,
         string category,
+        string description = "",
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation(
@@ -61,9 +62,16 @@ public sealed class VaultApiClient(
         streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         formContent.Add(streamContent, "file", fileName);
 
+        var queryParts = new List<string>
+        {
+            $"category={Uri.EscapeDataString(category)}"
+        };
+        if (!string.IsNullOrWhiteSpace(description))
+            queryParts.Add($"description={Uri.EscapeDataString(description)}");
+
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            $"api/document/upload?category={Uri.EscapeDataString(category)}")
+            $"api/document/upload?{string.Join("&", queryParts)}")
         {
             Content = formContent
         };
@@ -97,11 +105,25 @@ public sealed class VaultApiClient(
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<DocumentMetadataModel>> GetDocumentsAsync(
+        string? category = null,
+        string? search = null,
         CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Fetching document metadata list from API");
+        logger.LogInformation(
+            "Fetching document metadata list from API (category={Category}, search={Search})",
+            category, search);
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "api/document");
+        var queryParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(category))
+            queryParts.Add($"category={Uri.EscapeDataString(category)}");
+        if (!string.IsNullOrWhiteSpace(search))
+            queryParts.Add($"search={Uri.EscapeDataString(search)}");
+
+        var url = queryParts.Count > 0
+            ? $"api/document?{string.Join("&", queryParts)}"
+            : "api/document";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
         await AttachAuthorizationAsync(request, cancellationToken);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);

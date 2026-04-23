@@ -59,6 +59,16 @@ else
 
                         <dt>Claim Contact</dt>
                         <dd>@policy.ClaimContact</dd>
+
+                        @if (policy.ExpiryDate.HasValue)
+                        {
+                            <dt>Expiry Date</dt>
+                            <dd class="@(policy.IsExpired ? "vault-text--danger" : policy.IsExpiringSoon ? "vault-text--warn" : null)">
+                                @policy.ExpiryDate.Value.ToString("d MMM yyyy")
+                                @if (policy.IsExpired) { <span> ⚠ Expired</span> }
+                                else if (policy.IsExpiringSoon) { <span> ⚠ Expiring soon</span> }
+                            </dd>
+                        }
                     </dl>
 
                     <div class="vault-actions-cell">
@@ -142,6 +152,12 @@ else
                     <InputText id="insuranceClaimContact" class="vault-input" @bind-Value="_editModel.ClaimContact"
                                placeholder="Phone, email, or portal details" />
                     <ValidationMessage For="@(() => _editModel.ClaimContact)" class="vault-validation" />
+                </div>
+
+                <div class="vault-form-field">
+                    <label class="vault-label" for="insuranceExpiryDate">Expiry Date</label>
+                    <InputDate id="insuranceExpiryDate" class="vault-input" @bind-Value="_editModel.ExpiryDate" />
+                    <p class="vault-hint">Optional. Used to surface expiring-soon dashboard insights.</p>
                 </div>
 
                 <div class="vault-modal__footer">
@@ -239,7 +255,8 @@ else
             PolicyNumber = policy.PolicyNumber,
             Coverage = policy.Coverage,
             Nominee = policy.Nominee,
-            ClaimContact = policy.ClaimContact
+            ClaimContact = policy.ClaimContact,
+            ExpiryDate = policy.ExpiryDate
         };
         _statusMessage = null;
         _showDialog = true;

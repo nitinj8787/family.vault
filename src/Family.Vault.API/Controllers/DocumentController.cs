@@ -17,18 +17,50 @@ public sealed class DocumentController(
     ILogger<DocumentController> logger) : ControllerBase
 {
     /// <summary>
-    /// Returns all document metadata records for the currently authenticated user.
+    /// Returns document metadata records for the currently authenticated user.
+    /// Optionally filtered by <paramref name="category"/> and/or <paramref name="search"/>.
+    /// When neither parameter is supplied all documents are returned, ordered by descending
+    /// upload date.
     /// </summary>
+    /// <param name="category">
+    /// Optional category filter (e.g. <c>Uk</c>, <c>India</c>, <c>Insurance</c>,
+    /// <c>Legal</c>, <c>Financial</c>, <c>Medical</c>, <c>Other</c>). Case-insensitive.
+    /// </param>
+    /// <param name="search">
+    /// Optional free-text search term matched against file name and description.
+    /// Case-insensitive substring match.
+    /// </param>
     [HttpGet]
-    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
+    [Authorize(Policy = AuthorizationPolicies.CriticalDataReader)]
     [ProducesResponseType(typeof(IReadOnlyList<DocumentMetadataResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? category = null,
+        [FromQuery] string? search = null,
+        CancellationToken cancellationToken = default)
     {
         var userId = GetUserId();
-        var docs = await documentService.GetAllAsync(userId, cancellationToken);
-        logger.LogInformation("Returning {Count} documents for user {UserId}", docs.Count, userId);
+        if (userId is null)
+            return Unauthorized();
+
+        IReadOnlyList<DocumentMetadataResponse> docs;
+
+        if (string.IsNullOrWhiteSpace(category) && string.IsNullOrWhiteSpace(search))
+        {
+            docs = await documentService.GetAllAsync(userId, cancellationToken);
+        }
+        else
+        {
+            docs = await documentService.SearchAsync(userId, category, search, cancellationToken);
+        }
+
+        logger.LogInformation(
+            "Returning {Count} documents for user {UserId} (category={Category}, search={Search})",
+            docs.Count, userId,
+            LogSanitizer.Sanitize(category),
+            LogSanitizer.Sanitize(search));
+
         return Ok(docs);
     }
 
@@ -37,11 +69,13 @@ public sealed class DocumentController(
     /// </summary>
     /// <param name="file">The file to upload.</param>
     /// <param name="category">
-    /// Logical category for the document: <c>Uk</c>, <c>India</c>, or <c>Insurance</c>.
+    /// Logical category for the document: <c>Uk</c>, <c>India</c>, <c>Insurance</c>,
+    /// <c>Legal</c>, <c>Financial</c>, <c>Medical</c>, or <c>Other</c>.
     /// </param>
+    /// <param name="description">Optional free-text description of the document.</param>
     /// <param name="cancellationToken">Propagated cancellation token.</param>
     [HttpPost("upload")]
-    [Authorize(Policy = AuthorizationPolicies.FamilyMember)]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(typeof(DocumentUploadResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -49,7 +83,8 @@ public sealed class DocumentController(
     public async Task<IActionResult> Upload(
         IFormFile file,
         [FromQuery] DocumentCategory category,
-        CancellationToken cancellationToken)
+        [FromQuery] string? description = null,
+        CancellationToken cancellationToken = default)
     {
         if (file is null || file.Length == 0)
         {
@@ -57,6 +92,8 @@ public sealed class DocumentController(
         }
 
         var userId = GetUserId();
+        if (userId is null)
+            return Unauthorized();
 
         await using var stream = file.OpenReadStream();
 
@@ -64,7 +101,8 @@ public sealed class DocumentController(
             FileName: file.FileName,
             FileSizeBytes: file.Length,
             Content: stream,
-            Category: category);
+            Category: category,
+            Description: description ?? string.Empty);
 
         DocumentUploadResponse response;
 
@@ -89,7 +127,7 @@ public sealed class DocumentController(
     /// Downloads a document by its unique identifier for the currently authenticated user.
     /// </summary>
     [HttpGet("download/{id:guid}")]
-    [Authorize(Policy = AuthorizationPolicies.VaultReader)]
+    [Authorize(Policy = AuthorizationPolicies.CriticalDataReader)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -97,6 +135,8 @@ public sealed class DocumentController(
     public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken)
     {
         var userId = GetUserId();
+        if (userId is null)
+            return Unauthorized();
 
         logger.LogInformation(
             "Download requested for document {DocId} by user {UserId}", id, userId);
@@ -129,9 +169,13 @@ public sealed class DocumentController(
     // Private helpers
     // -----------------------------------------------------------------
 
-    private string GetUserId() =>
+    /// <summary>
+    /// Resolves the user identifier from standard OIDC/Azure AD claims.
+    /// Returns <c>null</c> if no recognisable identity claim is present;
+    /// callers must respond with 401 in that case.
+    /// </summary>
+    private string? GetUserId() =>
         User.FindFirst("oid")?.Value
         ?? User.FindFirst("sub")?.Value
-        ?? User.Identity?.Name
-        ?? "default";
+        ?? User.Identity?.Name;
 }

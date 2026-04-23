@@ -20,62 +20,147 @@ else if (_error is not null)
     <StatusMessage Type="StatusType.Error" Message="@_error" />
     <button class="vault-btn vault-btn--secondary" @onclick="LoadItemsAsync">Retry</button>
 }
-else if (_documents.Count == 0)
-{
-    <p class="vault-empty">
-        No documents uploaded yet.
-        <a href="/upload">Upload your first document</a>.
-    </p>
-}
 else
 {
-    <p class="vault-count">@_documents.Count document(s) stored</p>
-
-    @if (_downloadError is not null)
-    {
-        <StatusMessage Type="StatusType.Error" Message="@_downloadError" />
-    }
-
-    <div class="vault-table-wrapper">
-        <table class="vault-table" aria-label="Stored documents">
-            <thead>
-                <tr>
-                    <th scope="col">File Name</th>
-                    <th scope="col">Category</th>
-                    <th scope="col" class="vault-col--right">Size</th>
-                    <th scope="col">Uploaded</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var doc in _documents)
-                {
-                    <tr>
-                        <td><strong>@doc.FileName</strong></td>
-                        <td><span class="vault-doc-category vault-doc-category--@doc.Category.ToLowerInvariant()">@doc.Category</span></td>
-                        <td class="vault-col--right vault-muted">@FormatSize(doc.FileSizeBytes)</td>
-                        <td class="vault-muted">@doc.UploadedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
-                        <td class="vault-actions-cell">
-                            <button class="vault-btn vault-btn--secondary vault-btn--sm"
-                                    @onclick="() => DownloadAsync(doc)"
-                                    disabled="@(_downloadingId == doc.Id)"
-                                    aria-busy="@(_downloadingId == doc.Id)">
-                                @(_downloadingId == doc.Id ? "Downloading…" : "⬇ Download")
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    @* ── Search & Filter bar ── *@
+    <div class="vault-docs-toolbar">
+        <div class="vault-docs-search">
+            <span class="vault-docs-search__icon" aria-hidden="true">🔍</span>
+            <input type="search"
+                   class="vault-docs-search__input"
+                   placeholder="Search by file name or description…"
+                   aria-label="Search documents"
+                   value="@_searchTerm"
+                   @oninput="OnSearchInput" />
+        </div>
+        <div class="vault-docs-upload-link">
+            <a class="vault-btn vault-btn--primary vault-btn--sm" href="/upload">⬆ Upload</a>
+        </div>
     </div>
+
+    <div class="vault-docs-filter-bar" role="group" aria-label="Filter by category">
+        @foreach (var cat in _allCategories)
+        {
+            <button class="vault-docs-filter-pill @(cat == _selectedCategory ? "vault-docs-filter-pill--active" : "")"
+                    @onclick="() => SelectCategory(cat)"
+                    aria-pressed="@(cat == _selectedCategory)">
+                @GetCategoryIcon(cat) @(cat == "All" ? "All" : cat)
+            </button>
+        }
+    </div>
+
+    @if (_allDocuments.Count == 0)
+    {
+        <p class="vault-empty">
+            No documents uploaded yet.
+            <a href="/upload">Upload your first document</a>.
+        </p>
+    }
+    else
+    {
+        @if (_downloadError is not null)
+        {
+            <StatusMessage Type="StatusType.Error" Message="@_downloadError" />
+        }
+
+        @* ── Recently Uploaded section ── *@
+        @if (_recentDocuments.Count > 0 && string.IsNullOrWhiteSpace(_searchTerm) && _selectedCategory == "All")
+        {
+            <section class="vault-docs-section" aria-label="Recently uploaded">
+                <h2 class="vault-docs-section-title">🕐 Recently Uploaded</h2>
+                <div class="vault-docs-grid vault-docs-grid--recent">
+                    @foreach (var doc in _recentDocuments)
+                    {
+                        <div class="vault-doc-card vault-doc-card--recent">
+                            @RenderDocCard(doc)
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        @* ── All / Filtered Documents ── *@
+        <section class="vault-docs-section" aria-label="Documents">
+            @if (_recentDocuments.Count > 0 && string.IsNullOrWhiteSpace(_searchTerm) && _selectedCategory == "All")
+            {
+                <h2 class="vault-docs-section-title">📂 All Documents</h2>
+            }
+
+            @if (_filteredDocuments.Count == 0)
+            {
+                <p class="vault-empty">No documents match your search or filter.</p>
+            }
+            else
+            {
+                <p class="vault-count" aria-live="polite">
+                    @_filteredDocuments.Count of @_allDocuments.Count document@(_allDocuments.Count == 1 ? "" : "s")
+                </p>
+                <div class="vault-docs-grid">
+                    @foreach (var doc in _filteredDocuments)
+                    {
+                        <div class="vault-doc-card">
+                            @RenderDocCard(doc)
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+}
+
+@* Shared card fragment rendered as a RenderFragment to avoid repetition *@
+@code {
+    private RenderFragment RenderDocCard(DocumentMetadataModel doc) => __builder =>
+    {
+        <div class="vault-doc-card__header">
+            <span class="vault-doc-card__icon" aria-hidden="true">@GetFileIcon(Path.GetExtension(doc.FileName))</span>
+            <div class="vault-doc-card__meta">
+                <strong class="vault-doc-card__name" title="@doc.FileName">@TruncateName(doc.FileName, 28)</strong>
+                <span class="vault-doc-category vault-doc-category--@doc.Category.ToLowerInvariant()">
+                    @GetCategoryIcon(doc.Category) @doc.Category
+                </span>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(doc.Description))
+        {
+            <p class="vault-doc-card__desc">@doc.Description</p>
+        }
+
+        <div class="vault-doc-card__footer">
+            <span class="vault-muted vault-doc-card__size">@FormatSize(doc.FileSizeBytes)</span>
+            <span class="vault-muted vault-doc-card__date" title="@doc.UploadedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")">
+                @FormatRelativeDate(doc.UploadedAtUtc)
+            </span>
+            <button class="vault-btn vault-btn--secondary vault-btn--sm vault-doc-card__download"
+                    @onclick="() => DownloadAsync(doc)"
+                    disabled="@(_downloadingId == doc.Id)"
+                    aria-busy="@(_downloadingId == doc.Id)"
+                    aria-label="Download @doc.FileName">
+                @(_downloadingId == doc.Id ? "…" : "⬇")
+            </button>
+        </div>
+    };
 }
 
 @code {
-    private List<DocumentMetadataModel> _documents = [];
+    private List<DocumentMetadataModel> _allDocuments = [];
+    private List<DocumentMetadataModel> _filteredDocuments = [];
+    private List<DocumentMetadataModel> _recentDocuments = [];
+
     private bool _isLoading = true;
     private string? _error;
     private string? _downloadError;
     private Guid? _downloadingId;
+
+    private string _searchTerm = string.Empty;
+    private string _selectedCategory = "All";
+
+    private static readonly TimeSpan RecentWindow = TimeSpan.FromDays(7);
+    private const int MaxRecentItems = 5;
+
+    private static readonly string[] _allCategories =
+        ["All", "Uk", "India", "Insurance", "Legal", "Financial", "Medical", "Other"];
 
     protected override async Task OnInitializedAsync() => await LoadItemsAsync();
 
@@ -87,7 +172,8 @@ else
         try
         {
             var items = await VaultApiClient.GetDocumentsAsync();
-            _documents = [.. items];
+            _allDocuments = [.. items];
+            ApplyFilters();
         }
         catch (Exception ex)
         {
@@ -98,6 +184,46 @@ else
         {
             _isLoading = false;
         }
+    }
+
+    private void SelectCategory(string category)
+    {
+        _selectedCategory = category;
+        ApplyFilters();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        _recentDocuments = _allDocuments
+            .Where(d => (now - d.UploadedAtUtc) <= RecentWindow)
+            .OrderByDescending(d => d.UploadedAtUtc)
+            .Take(MaxRecentItems)
+            .ToList();
+
+        var query = _allDocuments.AsEnumerable();
+
+        if (_selectedCategory != "All")
+        {
+            query = query.Where(d =>
+                d.Category.Equals(_selectedCategory, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            query = query.Where(d =>
+                d.FileName.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                || d.Description.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        _filteredDocuments = query.OrderByDescending(d => d.UploadedAtUtc).ToList();
     }
 
     private async Task DownloadAsync(DocumentMetadataModel doc)
@@ -123,11 +249,49 @@ else
         }
     }
 
+    // -----------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------
+
     private static string FormatSize(long bytes) => bytes switch
     {
         < 1_024 => $"{bytes} B",
         < 1_048_576 => $"{bytes / 1_024.0:F1} KB",
         _ => $"{bytes / 1_048_576.0:F1} MB"
+    };
+
+    private static string FormatRelativeDate(DateTimeOffset utc)
+    {
+        var diff = DateTimeOffset.UtcNow - utc;
+        if (diff.TotalMinutes < 1)   return "just now";
+        if (diff.TotalHours < 1)     return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalDays < 1)      return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7)      return $"{(int)diff.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("dd MMM yyyy");
+    }
+
+    private static string TruncateName(string name, int maxLen) =>
+        name.Length <= maxLen ? name : $"{name[..(maxLen - 1)]}…";
+
+    private static string GetFileIcon(string ext) => ext.ToLowerInvariant() switch
+    {
+        ".pdf"  => "📄",
+        ".png" or ".jpg" or ".jpeg" => "🖼️",
+        ".docx" => "📝",
+        ".txt"  => "📃",
+        _       => "📁"
+    };
+
+    private static string GetCategoryIcon(string cat) => cat.ToLowerInvariant() switch
+    {
+        "uk"        => "🇬🇧",
+        "india"     => "🇮🇳",
+        "insurance" => "🛡️",
+        "legal"     => "⚖️",
+        "financial" => "💳",
+        "medical"   => "🏥",
+        "other"     => "📂",
+        _           => string.Empty
     };
 
     private static string GuessMimeType(string fileName)

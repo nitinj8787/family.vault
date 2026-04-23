@@ -31,15 +31,30 @@ builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration)
 // ---------------------------------------------------------------------------
 builder.Services.AddAuthorization(options =>
 {
-    // Any authenticated FamilyUser or Admin can list and upload vault items.
-    options.AddPolicy(AuthorizationPolicies.FamilyMember, policy =>
+    // Primary account users retain full access. Legacy roles are also supported.
+    options.AddPolicy(AuthorizationPolicies.FullAccess, policy =>
         policy.RequireAuthenticatedUser()
-              .RequireRole(Roles.FamilyUser, Roles.Admin));
+              .RequireRole(Roles.PrimaryUser, Roles.Admin, Roles.FamilyUser));
 
-    // Downloads are also accessible to EmergencyAccess users.
-    options.AddPolicy(AuthorizationPolicies.VaultReader, policy =>
+    // Spouse can read all family assets but does not get destructive permissions.
+    options.AddPolicy(AuthorizationPolicies.FamilyAssetReader, policy =>
         policy.RequireAuthenticatedUser()
-              .RequireRole(Roles.FamilyUser, Roles.Admin, Roles.EmergencyAccess));
+              .RequireRole(Roles.PrimaryUser, Roles.Spouse, Roles.Admin, Roles.FamilyUser));
+
+    // Emergency access is restricted to designated critical read endpoints.
+    options.AddPolicy(AuthorizationPolicies.CriticalDataReader, policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireRole(
+                  Roles.PrimaryUser,
+                  Roles.Spouse,
+                  Roles.EmergencyAccess,
+                  Roles.Admin,
+                  Roles.FamilyUser));
+
+    // Spouse limited edit policy for non-destructive profile updates.
+    options.AddPolicy(AuthorizationPolicies.LimitedEditor, policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireRole(Roles.PrimaryUser, Roles.Spouse, Roles.Admin, Roles.FamilyUser));
 
     // Privileged administrative operations are restricted to Admins only.
     options.AddPolicy(AuthorizationPolicies.AdminOnly, policy =>
@@ -54,6 +69,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<VaultUploadOptions>(builder.Configuration.GetSection(VaultUploadOptions.SectionName));
 builder.Services.Configure<DocumentOptions>(builder.Configuration.GetSection(DocumentOptions.SectionName));
+builder.Services.Configure<ReadinessScoreOptions>(builder.Configuration.GetSection(ReadinessScoreOptions.SectionName));
 
 // ---------------------------------------------------------------------------
 // SQLite — connection factory and database initialisation.
@@ -85,6 +101,8 @@ builder.Services.AddScoped<IWillsService, SqliteWillsService>();
 
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IFamilyVaultService, FamilyVaultService>();
+builder.Services.AddScoped<IInsightService, InsightService>();
+builder.Services.AddScoped<IReadinessScoreService, ReadinessScoreService>();
 
 // Register DefaultAzureCredential as a singleton so that token caching is shared across all
 // consumers and re-authentication round-trips are minimised.

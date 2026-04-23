@@ -1,6 +1,7 @@
 using Family.Vault.Application.Abstractions;
 using Family.Vault.Application.Exceptions;
 using Family.Vault.Application.Models;
+using Family.Vault.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,7 @@ public sealed class UkAssetsController(
 {
     /// <summary>Returns all UK assets belonging to the currently authenticated user.</summary>
     [HttpGet]
+    [Authorize(Policy = AuthorizationPolicies.FamilyAssetReader)]
     [ProducesResponseType(typeof(IReadOnlyList<UkAssetResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
@@ -27,6 +29,7 @@ public sealed class UkAssetsController(
 
     /// <summary>Adds a new UK asset for the currently authenticated user.</summary>
     [HttpPost]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(typeof(UkAssetResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -52,6 +55,7 @@ public sealed class UkAssetsController(
 
     /// <summary>Updates an existing UK asset for the currently authenticated user.</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(typeof(UkAssetResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -86,6 +90,7 @@ public sealed class UkAssetsController(
 
     /// <summary>Deletes a UK asset for the currently authenticated user.</summary>
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.FullAccess)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
